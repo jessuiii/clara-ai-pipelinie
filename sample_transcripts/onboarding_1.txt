@@ -1,0 +1,21 @@
+ONBOARDING CALL TRANSCRIPT - AcmePlumbing Inc. (account: acc_1)
+Date: 2025-02-01
+Participants: Onboarding Specialist, Mike Torres
+
+Mike: Hey, so a few things have changed since our demo. We hired a second on-call tech. Her name is Lisa Nguyen and her cell is 713-555-0288. She should be the first call on weekends, Dave handles weeknights.
+
+Onboarding: Got it, so the rotation changes based on day?
+
+Mike: Exactly. Also we updated our hours — we're now open Saturdays 8am to 2pm Central, not just weekdays.
+
+Onboarding: Any changes to emergency types?
+
+Mike: We're adding water heater failure to the emergency list. Had a few calls about that we had to handle manually.
+
+Onboarding: Any software or integration updates?
+
+Mike: No, still ServiceTrade, still no auto-creation. That rule stays.
+
+Onboarding: Anything else?
+
+Mike: One thing — please make sure the agent always confirms the caller's full address for any emergency, not just name and number. We've been getting calls without addresses and it slows dispatch.

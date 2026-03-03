@@ -1,0 +1,35 @@
+{
+  "account_id": "acc_2",
+  "changelog_generated_at": "2026-03-03T12:06:28.210537Z",
+  "from_version": "v1",
+  "to_version": "v2",
+  "source_file": "sample_transcripts\\onboarding_2.txt",
+  "summary": "3 field(s) updated during onboarding",
+  "changes": [
+    {
+      "field": "emergency_definition",
+      "old": [
+        "No Heat",
+        "Alarm"
+      ],
+      "new": [
+        "No Heat",
+        "Alarm",
+        "Smoke"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "notes",
+      "old": "Extracted via rule-based fallback.",
+      "new": "Updated via rule-based onboarding extraction.",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "office_address",
+      "old": "890 Commerce Street,",
+      "new": "1201 Wynkoop Street,",
+      "change_type": "value_updated"
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+DEMO CALL TRANSCRIPT - AcmePlumbing Inc.
+Date: 2025-01-15
+Participants: Sales Rep (Clara AI), Client (Mike Torres, Operations Manager)
+
+Sales Rep: Hi Mike, thanks for taking the time to speak with me today. Can you tell me a bit about AcmePlumbing and what you're looking for?
+
+Mike: Sure, we're AcmePlumbing Inc., based out of 1452 Industrial Blvd, Houston, TX 77002. We do commercial and residential plumbing, drain cleaning, and emergency pipe repair. We get a lot of after-hours calls and we're drowning.
+
+Sales Rep: What are your business hours?
+
+Mike: Monday through Friday, 7am to 6pm Central Time. Sometimes Saturday morning but that's not guaranteed.
+
+Sales Rep: And for after-hours emergencies, who handles that?
+
+Mike: We have an on-call technician. Right now that's Dave Kowalski, his cell is 713-555-0192. If he doesn't pick up within 30 seconds, try the dispatch line at 713-555-0100. If nothing works, they should leave a message and we guarantee a callback within an hour.
+
+Sales Rep: What qualifies as an emergency?
+
+Mike: Burst pipe, no water pressure, sewage backup, flooding, or gas smell near plumbing fixtures. That's it.
+
+Sales Rep: Any systems we should know about or avoid?
+
+Mike: We use ServiceTrade for work orders. AI should never create a job in ServiceTrade directly — that's our office manager's job. Just collect the info.
+
+Sales Rep: Got it. Anything else?
+
+Mike: Yeah, for non-emergency after hours, just take a message with name, number, and description. We'll call back next business day.

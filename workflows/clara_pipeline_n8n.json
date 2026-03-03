@@ -1,0 +1,203 @@
+{
+  "name": "Clara AI - Demo + Onboarding Pipeline",
+  "nodes": [
+    {
+      "parameters": {},
+      "id": "start-trigger",
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "path": "pipeline-a",
+        "options": {}
+      },
+      "id": "webhook-pipeline-a",
+      "name": "Webhook: Pipeline A Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [460, 200],
+      "webhookId": "pipeline-a-webhook"
+    },
+    {
+      "parameters": {
+        "path": "pipeline-b",
+        "options": {}
+      },
+      "id": "webhook-pipeline-b",
+      "name": "Webhook: Pipeline B Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [460, 420],
+      "webhookId": "pipeline-b-webhook"
+    },
+    {
+      "parameters": {
+        "command": "cd /data/clara-pipeline && python scripts/pipeline_a.py \"{{ $json.body.transcript_path }}\" \"{{ $json.body.account_id }}\""
+      },
+      "id": "exec-pipeline-a",
+      "name": "Execute Pipeline A",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [700, 200]
+    },
+    {
+      "parameters": {
+        "command": "cd /data/clara-pipeline && python scripts/pipeline_b.py \"{{ $json.body.transcript_path }}\" \"{{ $json.body.account_id }}\""
+      },
+      "id": "exec-pipeline-b",
+      "name": "Execute Pipeline B",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [700, 420]
+    },
+    {
+      "parameters": {
+        "command": "cat /data/clara-pipeline/outputs/accounts/\"{{ $json.body.account_id }}\"/v1/account_memo.json"
+      },
+      "id": "read-memo-v1",
+      "name": "Read Account Memo v1",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [940, 200]
+    },
+    {
+      "parameters": {
+        "command": "cat /data/clara-pipeline/outputs/accounts/\"{{ $json.body.account_id }}\"/v2/account_memo.json"
+      },
+      "id": "read-memo-v2",
+      "name": "Read Account Memo v2",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [940, 420]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Pipeline A output and prepare response\nconst stdout = $input.first().json.stdout;\ntry {\n  const memo = JSON.parse(stdout);\n  return [{ json: { success: true, account_id: memo.account_id, version: 'v1', company: memo.company_name } }];\n} catch(e) {\n  return [{ json: { success: true, message: 'Pipeline A completed', raw: stdout.slice(0, 200) } }];\n}"
+      },
+      "id": "format-response-a",
+      "name": "Format Response A",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Pipeline B output and prepare changelog summary\nconst stdout = $input.first().json.stdout;\ntry {\n  const memo = JSON.parse(stdout);\n  return [{ json: { success: true, account_id: memo.account_id, version: 'v2', updated: true } }];\n} catch(e) {\n  return [{ json: { success: true, message: 'Pipeline B completed', raw: stdout.slice(0, 200) } }];\n}"
+      },
+      "id": "format-response-b",
+      "name": "Format Response B",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1180, 420]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-a",
+      "name": "Respond to Pipeline A",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1420, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}"
+      },
+      "id": "respond-b",
+      "name": "Respond to Pipeline B",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1420, 420]
+    },
+    {
+      "parameters": {
+        "path": "batch",
+        "options": {}
+      },
+      "id": "webhook-batch",
+      "name": "Webhook: Batch Run",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [460, 620],
+      "webhookId": "batch-webhook"
+    },
+    {
+      "parameters": {
+        "command": "cd /data/clara-pipeline && python scripts/run_batch.py --dataset-dir ./sample_transcripts 2>&1"
+      },
+      "id": "exec-batch",
+      "name": "Execute Batch Run",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [700, 620]
+    },
+    {
+      "parameters": {
+        "command": "cat /data/clara-pipeline/outputs/batch_summary.json"
+      },
+      "id": "read-batch-summary",
+      "name": "Read Batch Summary",
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [940, 620]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.parse($json.stdout) }}"
+      },
+      "id": "respond-batch",
+      "name": "Respond Batch Summary",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1180, 620]
+    }
+  ],
+  "connections": {
+    "Webhook: Pipeline A Trigger": {
+      "main": [[{ "node": "Execute Pipeline A", "type": "main", "index": 0 }]]
+    },
+    "Execute Pipeline A": {
+      "main": [[{ "node": "Read Account Memo v1", "type": "main", "index": 0 }]]
+    },
+    "Read Account Memo v1": {
+      "main": [[{ "node": "Format Response A", "type": "main", "index": 0 }]]
+    },
+    "Format Response A": {
+      "main": [[{ "node": "Respond to Pipeline A", "type": "main", "index": 0 }]]
+    },
+    "Webhook: Pipeline B Trigger": {
+      "main": [[{ "node": "Execute Pipeline B", "type": "main", "index": 0 }]]
+    },
+    "Execute Pipeline B": {
+      "main": [[{ "node": "Read Account Memo v2", "type": "main", "index": 0 }]]
+    },
+    "Read Account Memo v2": {
+      "main": [[{ "node": "Format Response B", "type": "main", "index": 0 }]]
+    },
+    "Format Response B": {
+      "main": [[{ "node": "Respond to Pipeline B", "type": "main", "index": 0 }]]
+    },
+    "Webhook: Batch Run": {
+      "main": [[{ "node": "Execute Batch Run", "type": "main", "index": 0 }]]
+    },
+    "Execute Batch Run": {
+      "main": [[{ "node": "Read Batch Summary", "type": "main", "index": 0 }]]
+    },
+    "Read Batch Summary": {
+      "main": [[{ "node": "Respond Batch Summary", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "description": "Clara AI — Demo Call → Retell Agent → Onboarding Update pipeline. Zero-cost, runs locally."
+  }
+}

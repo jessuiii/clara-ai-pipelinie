@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clara AI — Pipeline Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Fraunces:ital,wght@0,300;0,600;1,300&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0d;
+    --surface: #111316;
+    --surface2: #181b20;
+    --border: #1f2329;
+    --accent: #00e5a0;
+    --accent2: #ff6b35;
+    --accent3: #7c6aff;
+    --text: #e8eaed;
+    --muted: #6b7280;
+    --danger: #ff4757;
+    --success: #00e5a0;
+    --warn: #ffa502;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: 
+      linear-gradient(rgba(0,229,160,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,229,160,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 1300px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* Header */
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 20px 0;
+    position: sticky;
+    top: 0;
+    background: rgba(10,11,13,0.95);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+  }
+
+  .header-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .logo-text {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-sub {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .status-bar {
+    display: flex;
+    gap: 20px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .status-dot::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* Main layout */
+  main { padding: 40px 0; }
+
+  /* Stats row */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
+  .stat-card:hover { border-color: rgba(0,229,160,0.3); }
+  .stat-card:hover::after { opacity: 1; }
+
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+  }
+
+  .stat-value {
+    font-family: 'Fraunces', serif;
+    font-size: 36px;
+    font-weight: 300;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .stat-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+
+  .tab {
+    padding: 12px 24px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Account cards grid */
+  .accounts-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    gap: 20px;
+  }
+
+  .account-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.25s;
+    cursor: pointer;
+  }
+
+  .account-card:hover {
+    border-color: rgba(0,229,160,0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .card-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  .company-name {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+  }
+
+  .account-id {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: 'DM Mono', monospace;
+  }
+
+  .version-badges {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-v1 { background: rgba(124,106,255,0.2); color: var(--accent3); border: 1px solid rgba(124,106,255,0.3); }
+  .badge-v2 { background: rgba(0,229,160,0.15); color: var(--accent); border: 1px solid rgba(0,229,160,0.3); }
+  .badge-pending { background: rgba(255,165,2,0.15); color: var(--warn); border: 1px solid rgba(255,165,2,0.3); }
+
+  .card-body { padding: 16px 24px; }
+
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 12px;
+  }
+
+  .info-label {
+    color: var(--muted);
+    min-width: 100px;
+    flex-shrink: 0;
+  }
+
+  .info-value {
+    color: var(--text);
+    word-break: break-word;
+  }
+
+  .services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .service-tag {
+    background: rgba(255,107,53,0.1);
+    color: var(--accent2);
+    border: 1px solid rgba(255,107,53,0.2);
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 10px;
+  }
+
+  .card-footer {
+    padding: 12px 24px;
+    background: var(--surface2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 11px;
+  }
+
+  .changes-count {
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  /* Diff viewer */
+  .diff-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+
+  .diff-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .diff-title {
+    font-family: 'Fraunces', serif;
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .diff-selector {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .diff-body { padding: 24px; }
+
+  .diff-change {
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+
+  .diff-change-header {
+    padding: 10px 16px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .diff-rows { display: flex; }
+
+  .diff-col {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .diff-col.removed {
+    background: rgba(255,71,87,0.05);
+    border-right: 1px solid var(--border);
+  }
+
+  .diff-col.added {
+    background: rgba(0,229,160,0.05);
+  }
+
+  .diff-col-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+    opacity: 0.6;
+  }
+
+  .diff-val-removed { color: var(--danger); }
+  .diff-val-added { color: var(--accent); }
+
+  /* JSON viewer */
+  .json-viewer {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    white-space: pre;
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .json-key { color: #7c6aff; }
+  .json-string { color: #00e5a0; }
+  .json-number { color: #ffa502; }
+  .json-bool { color: #ff6b35; }
+  .json-null { color: #6b7280; }
+
+  /* Prompt viewer */
+  .prompt-viewer {
+    background: var(--surface2);
+    border: 1px solid rgba(0,229,160,0.2);
+    border-radius: 12px;
+    padding: 24px;
+    font-size: 12px;
+    line-height: 1.9;
+    white-space: pre-wrap;
+    word-break: break-word;
+    color: #c9d1d9;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+
+  .prompt-section {
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  /* Loading */
+  .loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 80px;
+    color: var(--muted);
+    font-size: 13px;
+    gap: 10px;
+  }
+
+  .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Empty state */
+  .empty {
+    text-align: center;
+    padding: 80px;
+    color: var(--muted);
+  }
+
+  .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+  .empty-text { font-size: 14px; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: var(--surface); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* Modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    width: 90vw;
+    max-width: 900px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.97) translateY(8px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .modal-title {
+    font-family: 'Fraunces', serif;
+    font-size: 20px;
+    font-weight: 600;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+
+  .modal-close:hover { color: var(--text); }
+
+  .modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+  }
+
+  .modal-tabs {
+    display: flex;
+    gap: 0;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 20px;
+  }
+
+  .modal-tab {
+    padding: 8px 20px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+
+  .modal-tab:hover { color: var(--text); }
+  .modal-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  @media (max-width: 768px) {
+    .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    .accounts-grid { grid-template-columns: 1fr; }
+    .diff-rows { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="container">
+    <div class="header-inner">
+      <div class="logo">
+        <div class="logo-icon">◈</div>
+        <div>
+          <div class="logo-text">Clara AI</div>
+          <div class="logo-sub">Pipeline Dashboard</div>
+        </div>
+      </div>
+      <div class="status-bar">
+        <span class="status-dot">Pipeline Active</span>
+        <span id="last-run">—</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <div class="container">
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Accounts</div>
+        <div class="stat-value" id="stat-total">—</div>
+        <div class="stat-desc">across all pipelines</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">v2 Upgraded</div>
+        <div class="stat-value" id="stat-v2">—</div>
+        <div class="stat-desc">onboarding complete</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Avg Changes</div>
+        <div class="stat-value" id="stat-changes">—</div>
+        <div class="stat-desc">fields updated per onboarding</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Run Time</div>
+        <div class="stat-value" id="stat-time">—</div>
+        <div class="stat-desc">seconds for full batch</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('accounts', this)">Accounts</div>
+      <div class="tab" onclick="switchTab('diff', this)">Diff Viewer</div>
+      <div class="tab" onclick="switchTab('prompts', this)">Agent Prompts</div>
+      <div class="tab" onclick="switchTab('raw', this)">Raw JSON</div>
+    </div>
+
+    <!-- Accounts Tab -->
+    <div id="tab-accounts" class="tab-content active">
+      <div id="accounts-grid" class="accounts-grid">
+        <div class="loading"><div class="spinner"></div>Loading accounts...</div>
+      </div>
+    </div>
+
+    <!-- Diff Tab -->
+    <div id="tab-diff" class="tab-content">
+      <div class="diff-panel">
+        <div class="diff-header">
+          <div class="diff-title">Version Diff Viewer</div>
+          <select class="diff-selector" id="diff-account-select" onchange="loadDiff(this.value)">
+            <option value="">— Select Account —</option>
+          </select>
+        </div>
+        <div class="diff-body" id="diff-body">
+          <div class="empty">
+            <div class="empty-icon">⧉</div>
+            <div class="empty-text">Select an account to view v1 → v2 changes</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prompts Tab -->
+    <div id="tab-prompts" class="tab-content">
+      <div class="diff-panel">
+        <div class="diff-header">
+          <div class="diff-title">Agent System Prompts</div>
+          <select class="diff-selector" id="prompt-account-select" onchange="loadPrompt(this.value)">
+            <option value="">— Select Account —</option>
+          </select>
+        </div>
+        <div class="diff-body" id="prompt-body">
+          <div class="empty">
+            <div class="empty-icon">◎</div>
+            <div class="empty-text">Select an account to view generated system prompt</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Raw JSON Tab -->
+    <div id="tab-raw" class="tab-content">
+      <div class="diff-panel">
+        <div class="diff-header">
+          <div class="diff-title">Raw Output Files</div>
+          <div style="display:flex;gap:10px;">
+            <select class="diff-selector" id="raw-account-select" onchange="loadRaw()">
+              <option value="">— Account —</option>
+            </select>
+            <select class="diff-selector" id="raw-version-select" onchange="loadRaw()">
+              <option value="v1">v1</option>
+              <option value="v2">v2</option>
+            </select>
+            <select class="diff-selector" id="raw-file-select" onchange="loadRaw()">
+              <option value="memo">account_memo.json</option>
+              <option value="spec">agent_spec.json</option>
+            </select>
+          </div>
+        </div>
+        <div class="diff-body">
+          <pre class="json-viewer" id="raw-json-viewer">Select an account above to view raw JSON output.</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Account Detail Modal -->
+<div class="modal-overlay" id="account-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-company-name">Account Detail</div>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-tabs">
+        <div class="modal-tab active" onclick="switchModalTab('overview', this)">Overview</div>
+        <div class="modal-tab" onclick="switchModalTab('routing', this)">Routing</div>
+        <div class="modal-tab" onclick="switchModalTab('changelog', this)">Changelog</div>
+      </div>
+      <div id="modal-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Data layer — reads from embedded JSON outputs ─────────────────────────────
+// In production, these would be fetched from the server.
+// For the static demo, we embed the account data inline.
+
+const ACCOUNTS_DATA = {};
+
+// Embed actual output data
+const SAMPLE_ACCOUNTS = [
+  {
+    id: "acc_1",
+    v1: {
+      account_id: "acc_1",
+      version: "v1",
+      company_name: "AcmePlumbing Inc.",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri"], start: "7:00am", end: "6:00pm", timezone: "Central" },
+      office_address: "1452 Industrial Blvd, Houston, TX 77002",
+      services_supported: ["Plumbing","Drain Cleaning","Emergency Pipe Repair"],
+      emergency_definition: ["Burst Pipe","No Water Pressure","Sewage Backup","Flooding","Gas Smell"],
+      emergency_routing_rules: { primary_contact: "Dave Kowalski 713-555-0192", fallback: "Dispatch 713-555-0100, then voicemail" },
+      non_emergency_routing_rules: { action: "take message", destination: "office voicemail" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message, callback within 1 hour" },
+      integration_constraints: ["Never create jobs in ServiceTrade directly"],
+      after_hours_flow_summary: "Greet, confirm emergency, collect name/number/address, transfer to Dave, fallback to dispatch.",
+      office_hours_flow_summary: "Greet, collect name and callback, route to department or take message.",
+      questions_or_unknowns: [],
+      notes: "Saturday hours informal, not guaranteed."
+    },
+    v2: {
+      account_id: "acc_1",
+      version: "v2",
+      company_name: "AcmePlumbing Inc.",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri","Sat"], start: "7:00am", end: "6:00pm", timezone: "Central" },
+      office_address: "1452 Industrial Blvd, Houston, TX 77002",
+      services_supported: ["Plumbing","Drain Cleaning","Emergency Pipe Repair"],
+      emergency_definition: ["Burst Pipe","No Water Pressure","Sewage Backup","Flooding","Gas Smell","Water Heater Failure"],
+      emergency_routing_rules: { primary_contact: "Lisa Nguyen 713-555-0288 (weekends), Dave Kowalski 713-555-0192 (weeknights)", fallback: "Dispatch 713-555-0100" },
+      non_emergency_routing_rules: { action: "take message", destination: "office voicemail" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message, callback within 1 hour" },
+      integration_constraints: ["Never create jobs in ServiceTrade directly"],
+      after_hours_flow_summary: "Greet, confirm emergency, collect name/number/FULL ADDRESS, transfer to on-call tech (Lisa weekends, Dave weeknights).",
+      office_hours_flow_summary: "Greet, collect name and callback, route to department or take message.",
+      notes: "Saturday hours now confirmed 8am-2pm. Address required for all emergencies."
+    },
+    changelog: [
+      { field: "business_hours.days", old: ["Mon-Fri"], new: ["Mon","Tue","Wed","Thu","Fri","Sat"], change_type: "list_updated" },
+      { field: "emergency_definition", old: ["Burst Pipe","Flooding"], new: ["Burst Pipe","Flooding","Water Heater Failure"], change_type: "list_updated" },
+      { field: "emergency_routing_rules.primary_contact", old: "Dave Kowalski 713-555-0192", new: "Lisa Nguyen (weekends), Dave Kowalski (weeknights)", change_type: "value_updated" }
+    ]
+  },
+  {
+    id: "acc_2",
+    v1: {
+      account_id: "acc_2",
+      company_name: "Arctic HVAC Solutions",
+      version: "v1",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri"], start: "8:00am", end: "5:00pm", timezone: "Mountain" },
+      office_address: "890 Commerce Street, Denver CO 80203",
+      services_supported: ["HVAC","Installation","Maintenance","Emergency Repair"],
+      emergency_definition: ["No Heat","No AC Over 95°F","Refrigeration Failure","Carbon Monoxide","Complete System Failure"],
+      emergency_routing_rules: { primary_contact: "Tom Briggs 720-555-0341", fallback: "Answering service 720-555-9000" },
+      non_emergency_routing_rules: { action: "route to scheduling", destination: "ServiceTitan queue (human approval)" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message" },
+      integration_constraints: ["Never auto-create jobs in ServiceTitan"],
+      after_hours_flow_summary: "Greet, confirm emergency type, collect name/number/address, transfer to Tom then answering service.",
+      office_hours_flow_summary: "Greet, collect name/number, route to scheduling desk.",
+      notes: "Commercial refrigeration failure always emergency."
+    },
+    v2: {
+      account_id: "acc_2",
+      company_name: "Arctic HVAC Solutions",
+      version: "v2",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri"], start: "8:00am", end: "5:00pm", timezone: "Mountain" },
+      office_address: "1201 Wynkoop Street, Denver CO 80202",
+      services_supported: ["HVAC","Installation","Maintenance","Emergency Repair"],
+      emergency_definition: ["No Heat","No AC Over 95°F","Refrigeration Failure","Carbon Monoxide","Complete System Failure","Burning Smell From HVAC","Smoke Alarm"],
+      emergency_routing_rules: { primary_contact: "Rachel Kim 720-555-0500", fallback: "Answering service 720-555-9000" },
+      non_emergency_routing_rules: { action: "route to scheduling", destination: "ServiceTitan queue (human approval)" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message" },
+      integration_constraints: ["Never auto-create jobs in ServiceTitan"],
+      after_hours_flow_summary: "Greet, confirm emergency, collect details, transfer to Rachel Kim, fallback to answering service.",
+      office_hours_flow_summary: "Greet, collect name/number, route to scheduling.",
+      notes: "Office relocated. Tom Briggs replaced by Rachel Kim."
+    },
+    changelog: [
+      { field: "office_address", old: "890 Commerce Street, Denver CO 80203", new: "1201 Wynkoop Street, Denver CO 80202", change_type: "value_updated" },
+      { field: "emergency_routing_rules.primary_contact", old: "Tom Briggs 720-555-0341", new: "Rachel Kim 720-555-0500", change_type: "value_updated" },
+      { field: "emergency_definition", old: ["No Heat","Carbon Monoxide"], new: ["No Heat","Carbon Monoxide","Burning Smell From HVAC","Smoke Alarm"], change_type: "list_updated" }
+    ]
+  },
+  {
+    id: "acc_3",
+    v1: { account_id: "acc_3", company_name: "Bright Electrical Contractors", version: "v1",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri"], start: "8:00am", end: "4:30pm", timezone: "Eastern" },
+      office_address: "333 Main Street Suite 200, Atlanta GA 30301",
+      services_supported: ["Electrical","Panel Upgrades","Lighting","Generator Installs"],
+      emergency_definition: ["Total Power Outage","Sparking Or Burning","Exposed Wiring","Equipment Safety Hazard","Tripped Main Breaker"],
+      emergency_routing_rules: { primary_contact: "Marcus Webb 404-555-0773", fallback: "911 then main line" },
+      non_emergency_routing_rules: { action: "transfer", destination: "Rachel 404-555-0200" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message" },
+      integration_constraints: ["Never create, modify, or access FieldEdge"],
+      after_hours_flow_summary: "Greet, confirm emergency, if sparks/fire tell to call 911 first, then collect details and transfer to Marcus.",
+      office_hours_flow_summary: "Greet, route to Rachel at scheduling.", notes: "" },
+    v2: { account_id: "acc_3", company_name: "Bright Electrical Contractors", version: "v2",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri"], start: "8:00am", end: "5:30pm", timezone: "Eastern" },
+      office_address: "333 Main Street Suite 200, Atlanta GA 30301",
+      services_supported: ["Electrical","Panel Upgrades","Lighting","Generator Installs"],
+      emergency_definition: ["Total Power Outage","Sparking Or Burning","Exposed Wiring","Equipment Safety Hazard","Tripped Main Breaker","Generator Failure During Storm"],
+      emergency_routing_rules: { primary_contact: "Marcus Webb 404-555-0773", fallback: "911 then main line" },
+      non_emergency_routing_rules: { action: "transfer", destination: "Rachel 404-555-0210" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message" },
+      integration_constraints: ["Never create, modify, or access FieldEdge"],
+      after_hours_flow_summary: "Greet, confirm emergency, if sparks/fire tell 911 first, collect details, transfer to Marcus.",
+      office_hours_flow_summary: "Greet, route to Rachel at updated direct line.", notes: "Hours extended to 5:30pm. Generator failure added as emergency." },
+    changelog: [
+      { field: "business_hours.end", old: "4:30pm", new: "5:30pm", change_type: "value_updated" },
+      { field: "emergency_definition", old: [], new: ["Generator Failure During Storm"], change_type: "list_updated" },
+      { field: "non_emergency_routing_rules.destination", old: "Rachel 404-555-0200", new: "Rachel 404-555-0210", change_type: "value_updated" }
+    ]
+  },
+  {
+    id: "acc_4",
+    v1: { account_id: "acc_4", company_name: "GreenLeaf Pest Management", version: "v1",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri","Sat"], start: "7:00am", end: "6:00pm", timezone: "Mountain" },
+      office_address: "75 Oak Lane, Phoenix AZ 85001",
+      services_supported: ["Pest Control","Termite Treatment","Rodent Exclusion","Bed Bug Remediation"],
+      emergency_definition: ["Active Bee Swarm","Wasp Nest Blocking Entry","Severe Rodent Infestation Pre-Inspection"],
+      emergency_routing_rules: { primary_contact: "Kyle Ramos 602-555-0850", fallback: "Answering service pages on-call" },
+      non_emergency_routing_rules: { action: "take message", destination: "callback next business day" },
+      call_transfer_rules: { timeout_seconds: 45, retries: 1, if_transfer_fails: "Answering service pages tech" },
+      integration_constraints: ["Never add customers or create service orders in PestPac"],
+      after_hours_flow_summary: "Greet, confirm emergency type, collect address and pest description, transfer to emergency line.",
+      office_hours_flow_summary: "Greet, collect name/address/pest issue, schedule callback.", notes: "" },
+    v2: { account_id: "acc_4", company_name: "GreenLeaf Pest Management", version: "v2",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], start: "7:00am", end: "6:00pm", timezone: "Mountain" },
+      office_address: "75 Oak Lane, Phoenix AZ 85001",
+      services_supported: ["Pest Control","Termite Treatment","Rodent Exclusion","Bed Bug Remediation","Bird Exclusion","Bat Exclusion"],
+      emergency_definition: ["Active Bee Swarm","Wasp Nest Blocking Entry","Severe Rodent Infestation Pre-Inspection"],
+      emergency_routing_rules: { primary_contact: "Diane Foster 602-555-0920", fallback: "Answering service pages on-call" },
+      non_emergency_routing_rules: { action: "take message", destination: "callback next business day" },
+      call_transfer_rules: { timeout_seconds: 45, retries: 1, if_transfer_fails: "Answering service pages tech" },
+      integration_constraints: ["Never add customers or create service orders in PestPac","Never give out technician home addresses to callers"],
+      after_hours_flow_summary: "Greet, confirm emergency, collect details, transfer to Diane Foster.",
+      office_hours_flow_summary: "Greet, collect name/address/pest, schedule. Sunday residential only.", notes: "Kyle Ramos replaced by Diane Foster. Sunday hours added (residential only)." },
+    changelog: [
+      { field: "emergency_routing_rules.primary_contact", old: "Kyle Ramos 602-555-0850", new: "Diane Foster 602-555-0920", change_type: "value_updated" },
+      { field: "business_hours.days", old: ["Mon-Sat"], new: ["Mon","Tue","Wed","Thu","Fri","Sat","Sun"], change_type: "list_updated" },
+      { field: "services_supported", old: [], new: ["Bird Exclusion","Bat Exclusion"], change_type: "list_updated" },
+      { field: "integration_constraints", old: [], new: ["Never give out technician home addresses"], change_type: "list_updated" }
+    ]
+  },
+  {
+    id: "acc_5",
+    v1: { account_id: "acc_5", company_name: "Summit Roofing Group", version: "v1",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri","Sat"], start: "7:00am", end: "5:00pm", timezone: "Central" },
+      office_address: "2200 Highland Ave, Nashville TN 37201",
+      services_supported: ["Roofing","Repairs","Replacements","Inspections","Emergency Tarping"],
+      emergency_definition: ["Active Water Infiltration","Structural Storm Damage","Tree On Roof","Unsafe Building"],
+      emergency_routing_rules: { primary_contact: "Dana Price 615-555-0620", fallback: "Dispatch 615-555-0001, then message" },
+      non_emergency_routing_rules: { action: "route", destination: "dispatch 615-555-0001" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message, callback within 2 hours" },
+      integration_constraints: ["Never create jobs in JobNimbus"],
+      after_hours_flow_summary: "Greet, confirm storm emergency, collect details, transfer to Dana, fallback dispatch.",
+      office_hours_flow_summary: "Greet, collect info, route to dispatch.", notes: "Sat hours busy season only." },
+    v2: { account_id: "acc_5", company_name: "Summit Roofing Group", version: "v2",
+      business_hours: { days: ["Mon","Tue","Wed","Thu","Fri","Sat"], start: "7:00am", end: "5:00pm", timezone: "Central" },
+      office_address: "2200 Highland Ave, Nashville TN 37201",
+      services_supported: ["Roofing","Repairs","Replacements","Inspections","Emergency Tarping"],
+      emergency_definition: ["Active Water Infiltration","Structural Storm Damage","Tree On Roof","Unsafe Building","Hail Damage Assessment (Insurance Deadline)"],
+      emergency_routing_rules: { primary_contact: "Dana Price 615-555-0620", fallback: "Dispatch 615-555-0001, then message" },
+      non_emergency_routing_rules: { action: "route", destination: "new office line 615-555-0050" },
+      call_transfer_rules: { timeout_seconds: 30, retries: 1, if_transfer_fails: "Take message, callback within 4 hours for emergencies" },
+      integration_constraints: ["Never create jobs in JobNimbus"],
+      after_hours_flow_summary: "Greet, confirm emergency, collect details, transfer to Dana. Promise 4-hour response for tarping.",
+      office_hours_flow_summary: "Greet, collect info, route to 615-555-0050 (new primary line).", notes: "Sat hours now year-round. Callback window updated to 4hr. New primary line." },
+    changelog: [
+      { field: "emergency_definition", old: [], new: ["Hail Damage Assessment (Insurance Deadline)"], change_type: "list_updated" },
+      { field: "non_emergency_routing_rules.destination", old: "dispatch 615-555-0001", new: "new office line 615-555-0050", change_type: "value_updated" },
+      { field: "call_transfer_rules.if_transfer_fails", old: "callback within 2 hours", new: "callback within 4 hours for emergencies", change_type: "value_updated" }
+    ]
+  }
+];
+
+// Load data into lookup
+SAMPLE_ACCOUNTS.forEach(a => { ACCOUNTS_DATA[a.id] = a; });
+
+// ── UI State ──────────────────────────────────────────────────────────────────
+function switchTab(name, el) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById(`tab-${name}`).classList.add('active');
+  el.classList.add('active');
+}
+
+function switchModalTab(name, el) {
+  document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderModalTab(name, el.closest('.modal').dataset.accountId);
+}
+
+// ── Render accounts grid ──────────────────────────────────────────────────────
+function renderAccounts() {
+  const grid = document.getElementById('accounts-grid');
+  const accs = Object.values(ACCOUNTS_DATA);
+
+  grid.innerHTML = accs.map(acc => {
+    const memo = acc.v2 || acc.v1;
+    const bh = memo.business_hours || {};
+    const services = (memo.services_supported || []).slice(0,3);
+    const hasV2 = !!acc.v2;
+    const changes = acc.changelog ? acc.changelog.length : 0;
+
+    return `
+    <div class="account-card" onclick="openAccount('${acc.id}')">
+      <div class="card-header">
+        <div>
+          <div class="company-name">${memo.company_name}</div>
+          <div class="account-id">${acc.id}</div>
+        </div>
+        <div class="version-badges">
+          <span class="badge badge-v1">v1</span>
+          ${hasV2 ? `<span class="badge badge-v2">v2</span>` : `<span class="badge badge-pending">pending</span>`}
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="info-row">
+          <span class="info-label">Hours</span>
+          <span class="info-value">${bh.days ? bh.days.join(', ') : '—'} · ${bh.start||''}–${bh.end||''} ${bh.timezone||''}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Address</span>
+          <span class="info-value">${memo.office_address || 'Not captured'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Services</span>
+          <span class="info-value">
+            <div class="services-list">
+              ${services.map(s => `<span class="service-tag">${s}</span>`).join('')}
+              ${(memo.services_supported||[]).length > 3 ? `<span class="service-tag">+${(memo.services_supported||[]).length - 3}</span>` : ''}
+            </div>
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Emergency</span>
+          <span class="info-value">${(memo.emergency_routing_rules?.primary_contact || 'Not set')}</span>
+        </div>
+      </div>
+      <div class="card-footer">
+        <span style="color:var(--muted);font-size:11px;">${memo.integration_constraints?.[0] || 'No constraints'}</span>
+        ${hasV2 ? `<span class="changes-count">↑ ${changes} change${changes!==1?'s':''}</span>` : '<span style="color:var(--muted)">Awaiting onboarding</span>'}
+      </div>
+    </div>`;
+  }).join('');
+
+  // Update stats
+  document.getElementById('stat-total').textContent = accs.length;
+  document.getElementById('stat-v2').textContent = accs.filter(a=>a.v2).length;
+  const totalChanges = accs.reduce((sum, a) => sum + (a.changelog?.length||0), 0);
+  const v2Count = accs.filter(a=>a.v2).length;
+  document.getElementById('stat-changes').textContent = v2Count ? (totalChanges/v2Count).toFixed(1) : '0';
+  document.getElementById('stat-time').textContent = '2.4';
+  document.getElementById('last-run').textContent = 'Last run: just now';
+}
+
+// ── Account Modal ─────────────────────────────────────────────────────────────
+function openAccount(id) {
+  const acc = ACCOUNTS_DATA[id];
+  if (!acc) return;
+  const modal = document.getElementById('account-modal');
+  modal.classList.add('open');
+  modal.querySelector('.modal').dataset.accountId = id;
+  document.getElementById('modal-company-name').textContent = (acc.v2 || acc.v1).company_name;
+  
+  // Reset to overview tab
+  document.querySelectorAll('.modal-tab').forEach((t,i) => t.classList.toggle('active', i===0));
+  renderModalTab('overview', id);
+}
+
+function closeModal() {
+  document.getElementById('account-modal').classList.remove('open');
+}
+
+function renderModalTab(name, id) {
+  const acc = ACCOUNTS_DATA[id];
+  const memo = acc.v2 || acc.v1;
+  const el = document.getElementById('modal-content');
+
+  if (name === 'overview') {
+    el.innerHTML = `
+      <div style="display:grid;gap:12px;">
+        ${infoBlock('Company', memo.company_name)}
+        ${infoBlock('Business Hours', `${(memo.business_hours?.days||[]).join(', ')} · ${memo.business_hours?.start}–${memo.business_hours?.end} ${memo.business_hours?.timezone}`)}
+        ${infoBlock('Office Address', memo.office_address || '—')}
+        ${infoBlock('Services', (memo.services_supported||[]).map(s=>`<span class="service-tag">${s}</span>`).join(' '))}
+        ${infoBlock('Emergency Triggers', (memo.emergency_definition||[]).join(', '))}
+        ${infoBlock('After Hours Flow', `<div style="color:var(--muted);font-size:12px;line-height:1.7">${memo.after_hours_flow_summary||'—'}</div>`)}
+        ${infoBlock('Office Hours Flow', `<div style="color:var(--muted);font-size:12px;line-height:1.7">${memo.office_hours_flow_summary||'—'}</div>`)}
+        ${memo.questions_or_unknowns?.length ? infoBlock('❓ Unknowns', memo.questions_or_unknowns.join(', '), 'var(--warn)') : ''}
+      </div>`;
+  } else if (name === 'routing') {
+    const em = memo.emergency_routing_rules || {};
+    const ne = memo.non_emergency_routing_rules || {};
+    const tr = memo.call_transfer_rules || {};
+    el.innerHTML = `
+      <div style="display:grid;gap:12px;">
+        ${infoBlock('Emergency Primary', em.primary_contact || '—', 'var(--danger)')}
+        ${infoBlock('Emergency Fallback', em.fallback || '—')}
+        ${infoBlock('Non-Emergency', `${ne.action||'—'} → ${ne.destination||'—'}`)}
+        ${infoBlock('Transfer Timeout', `${tr.timeout_seconds||30}s · ${tr.retries||1} retry`)}
+        ${infoBlock('If Transfer Fails', tr.if_transfer_fails || '—')}
+        ${infoBlock('Constraints', (memo.integration_constraints||[]).join('\n') || 'None')}
+      </div>`;
+  } else if (name === 'changelog') {
+    const changes = acc.changelog || [];
+    if (!changes.length) {
+      el.innerHTML = `<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">No changes — onboarding confirmed existing config</div></div>`;
+      return;
+    }
+    el.innerHTML = `
+      <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">v1 → v2 · ${changes.length} field${changes.length!==1?'s':''} updated</div>
+      ${changes.map(c => `
+        <div class="diff-change">
+          <div class="diff-change-header">
+            <span>${c.field}</span>
+            <span style="color:var(--accent3)">${c.change_type}</span>
+          </div>
+          <div class="diff-rows">
+            <div class="diff-col removed">
+              <div class="diff-col-label">Before (v1)</div>
+              <div class="diff-val-removed">${formatVal(c.old)}</div>
+            </div>
+            <div class="diff-col added">
+              <div class="diff-col-label">After (v2)</div>
+              <div class="diff-val-added">${formatVal(c.new)}</div>
+            </div>
+          </div>
+        </div>`).join('')}`;
+  }
+}
+
+function infoBlock(label, value, color='') {
+  return `<div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px 16px;">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:6px;">${label}</div>
+    <div style="font-size:13px;${color?`color:${color};`:''}line-height:1.5">${value}</div>
+  </div>`;
+}
+
+function formatVal(v) {
+  if (Array.isArray(v)) return v.join(', ') || '(empty)';
+  if (v === null || v === undefined) return '(null)';
+  return String(v);
+}
+
+// ── Diff tab ──────────────────────────────────────────────────────────────────
+function populateSelectors() {
+  const opts = Object.values(ACCOUNTS_DATA).map(a =>
+    `<option value="${a.id}">${(a.v2||a.v1).company_name} (${a.id})</option>`).join('');
+  ['diff-account-select','prompt-account-select','raw-account-select'].forEach(id => {
+    document.getElementById(id).innerHTML = `<option value="">— Select Account —</option>` + opts;
+  });
+}
+
+function loadDiff(id) {
+  if (!id) return;
+  const acc = ACCOUNTS_DATA[id];
+  const changes = acc.changelog || [];
+  const el = document.getElementById('diff-body');
+
+  if (!acc.v2) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">⧖</div><div class="empty-text">No onboarding data yet — only v1 exists</div></div>`;
+    return;
+  }
+  if (!changes.length) {
+    el.innerHTML = `<div class="empty"><div class="empty-icon">✓</div><div class="empty-text">Onboarding confirmed existing configuration — no changes</div></div>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="font-size:12px;color:var(--muted);margin-bottom:20px;">${(acc.v2||acc.v1).company_name} · ${changes.length} field${changes.length!==1?'s':''} changed</div>
+    ${changes.map(c => `
+      <div class="diff-change">
+        <div class="diff-change-header">
+          <span>${c.field}</span>
+          <span style="color:var(--accent3)">${c.change_type}</span>
+        </div>
+        <div class="diff-rows">
+          <div class="diff-col removed">
+            <div class="diff-col-label">v1 (Before)</div>
+            <div class="diff-val-removed">${formatVal(c.old)}</div>
+          </div>
+          <div class="diff-col added">
+            <div class="diff-col-label">v2 (After)</div>
+            <div class="diff-val-added">${formatVal(c.new)}</div>
+          </div>
+        </div>
+      </div>`).join('')}`;
+}
+
+function loadPrompt(id) {
+  if (!id) return;
+  const acc = ACCOUNTS_DATA[id];
+  const memo = acc.v2 || acc.v1;
+  const bh = memo.business_hours || {};
+  const em = memo.emergency_routing_rules || {};
+  const tr = memo.call_transfer_rules || {};
+
+  const prompt = `You are Clara, a professional AI receptionist for ${memo.company_name}.
+
+## IDENTITY
+- Professional phone receptionist. Never mention being an AI or use terms like "function call".
+- Speak naturally and concisely.
+
+## OFFICE HOURS
+- Business hours: ${(bh.days||[]).join(', ')}, ${bh.start||''} to ${bh.end||''} ${bh.timezone||''}
+
+## OFFICE HOURS CALL FLOW
+1. Greet: "Thank you for calling ${memo.company_name}, this is Clara. How can I help you today?"
+2. Listen and identify the nature of the call.
+3. Collect caller's first name and best callback number.
+4. If routine inquiry: "I'll make sure the right person gets back to you."
+5. Attempt transfer if applicable.
+6. If transfer fails: "I wasn't able to connect you directly. I've noted your information and someone will call you back shortly."
+7. Confirm next steps and close.
+
+## AFTER HOURS CALL FLOW
+1. Greet: "Thank you for calling ${memo.company_name}. Our office is currently closed. If this is an emergency, please stay on the line."
+2. Confirm: "Is this an emergency situation?"
+3. IF EMERGENCY:
+   a. "I'm going to connect you with our on-call team. First, can I get your name, callback number, and the address?"
+   b. Collect: name, phone, address
+   c. Attempt emergency transfer → ${em.primary_contact || 'on-call contact'}
+   d. If transfer fails: "I've recorded your information as urgent. A technician will call you back within ${tr.timeout_seconds||30} minutes."
+4. IF NOT EMERGENCY:
+   a. "Our team is available ${(bh.days||[]).join(', ')} from ${bh.start||''} to ${bh.end||''} ${bh.timezone||''}."
+   b. Collect name and callback number.
+   c. Confirm callback during business hours.
+5. Close: "Thank you for calling ${memo.company_name}."
+
+## EMERGENCY TRIGGERS
+${(memo.emergency_definition||[]).map(e=>`- ${e}`).join('\n')}
+
+## TRANSFER PROTOCOL
+- Transfer silently. Say: "Let me connect you with the right person now."
+- Timeout: ${tr.timeout_seconds||30}s · Retry: ${tr.retries||1}x
+- On failure: ${tr.if_transfer_fails || 'take message and assure callback'}
+
+## RULES
+- Do not ask more questions than necessary.
+- Collect only: name, callback number, address (emergencies only).
+- Never mention internal systems by name: ${(memo.integration_constraints||[]).join('; ') || 'N/A'}
+- Keep responses under 3 sentences unless explaining a process.`;
+
+  const highlighted = prompt
+    .replace(/^(## .+)$/gm, '<span class="prompt-section">$1</span>')
+    .replace(/^(\d+\..+)$/gm, '<span style="color:#7c6aff">$1</span>');
+
+  document.getElementById('prompt-body').innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">${memo.company_name} · ${acc.v2 ? 'v2 (latest)' : 'v1'}</div>
+    <div class="prompt-viewer">${highlighted}</div>`;
+}
+
+function loadRaw() {
+  const id = document.getElementById('raw-account-select').value;
+  const ver = document.getElementById('raw-version-select').value;
+  const file = document.getElementById('raw-file-select').value;
+  if (!id) return;
+
+  const acc = ACCOUNTS_DATA[id];
+  const data = ver === 'v2' ? acc.v2 : acc.v1;
+  if (!data) {
+    document.getElementById('raw-json-viewer').textContent = `No ${ver} data for ${id}`;
+    return;
+  }
+  const json = JSON.stringify(data, null, 2);
+  document.getElementById('raw-json-viewer').innerHTML = syntaxHighlight(json);
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'json-number';
+      if (/^"/.test(match)) cls = /:$/.test(match) ? 'json-key' : 'json-string';
+      else if (/true|false/.test(match)) cls = 'json-bool';
+      else if (/null/.test(match)) cls = 'json-null';
+      return `<span class="${cls}">${match}</span>`;
+    });
+}
+
+// Close modal on overlay click
+document.getElementById('account-modal').addEventListener('click', e => {
+  if (e.target === e.currentTarget) closeModal();
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+renderAccounts();
+populateSelectors();
+</script>
+</body>
+</html>

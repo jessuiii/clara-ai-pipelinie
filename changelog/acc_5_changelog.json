@@ -1,0 +1,31 @@
+{
+  "account_id": "acc_5",
+  "changelog_generated_at": "2026-03-03T12:06:29.855127Z",
+  "from_version": "v1",
+  "to_version": "v2",
+  "source_file": "sample_transcripts\\onboarding_5.txt",
+  "summary": "2 field(s) updated during onboarding",
+  "changes": [
+    {
+      "field": "emergency_definition",
+      "old": [
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm"
+      ],
+      "new": [
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm",
+        "Urgent"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "notes",
+      "old": "Extracted via rule-based fallback.",
+      "new": "Updated via rule-based onboarding extraction.",
+      "change_type": "value_updated"
+    }
+  ]
+}

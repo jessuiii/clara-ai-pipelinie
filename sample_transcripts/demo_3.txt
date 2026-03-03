@@ -1,0 +1,25 @@
+DEMO CALL TRANSCRIPT - Bright Electrical Contractors
+Date: 2025-01-17
+Participants: Sales Rep, Client (James Park, General Manager)
+
+James: We're Bright Electrical, we do commercial electrical work — panel upgrades, lighting, code compliance, generator installs. Our main office is 333 Main Street Suite 200, Atlanta GA 30301.
+
+Sales Rep: What are your office hours?
+
+James: Monday through Friday 8am to 4:30pm Eastern. No weekend office hours.
+
+Sales Rep: Emergency routing?
+
+James: Emergencies go to our lead electrician Marcus Webb at 404-555-0773. He's on call every weeknight and weekends. If it's truly dangerous — sparks, burning smell, power arcing — tell them to call 911 first and then us.
+
+Sales Rep: What do you classify as an electrical emergency?
+
+James: Total power outage at a business, sparking or burning smell, exposed wiring, equipment failure that's a safety hazard, or a tripped main breaker that won't reset.
+
+Sales Rep: Business hours routing?
+
+James: Route to our office coordinator Rachel at the main line 404-555-0200. She handles scheduling.
+
+Sales Rep: Any system constraints?
+
+James: We use FieldEdge for dispatch. Don't touch it — don't create, don't modify. Just collect information.

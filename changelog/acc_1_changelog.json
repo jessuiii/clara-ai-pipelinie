@@ -1,0 +1,55 @@
+{
+  "account_id": "acc_1",
+  "changelog_generated_at": "2026-03-03T12:06:27.661188Z",
+  "from_version": "v1",
+  "to_version": "v2",
+  "source_file": "sample_transcripts\\onboarding_1.txt",
+  "summary": "5 field(s) updated during onboarding",
+  "changes": [
+    {
+      "field": "business_hours.days",
+      "old": [
+        "Mon",
+        "Fri",
+        "Sat"
+      ],
+      "new": [
+        "Sat"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "business_hours.end",
+      "old": "6pm",
+      "new": "2pm",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "business_hours.start",
+      "old": "7am",
+      "new": "8am",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "emergency_definition",
+      "old": [
+        "Flood",
+        "Burst Pipe"
+      ],
+      "new": [
+        "Flood",
+        "Burst Pipe",
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "notes",
+      "old": "Extracted via rule-based fallback.",
+      "new": "Updated via rule-based onboarding extraction.",
+      "change_type": "value_updated"
+    }
+  ]
+}

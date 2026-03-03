@@ -1,0 +1,25 @@
+DEMO CALL TRANSCRIPT - GreenLeaf Pest Management
+Date: 2025-01-18
+Participants: Sales Rep, Client (Patricia Gomez, Operations Director)
+
+Patricia: GreenLeaf Pest Management — we handle commercial and residential pest control, termite treatment, rodent exclusion, and bed bug remediation. We're at 75 Oak Lane, Phoenix AZ 85001.
+
+Sales Rep: Business hours?
+
+Patricia: Monday through Saturday, 7am to 6pm Mountain Time. We're closed Sundays.
+
+Sales Rep: After-hours emergencies?
+
+Patricia: Honestly most pest control isn't life-or-death after hours. But we do get calls about active bee swarms, wasp nests blocking entry, or severe rodent infestations in restaurants that have health inspections next morning. For those, call our emergency line 602-555-0850.
+
+Sales Rep: Who answers that line?
+
+Patricia: That rotates. Right now it's our senior tech Kyle Ramos. If not answered in 45 seconds, it goes to our answering service who pages him.
+
+Sales Rep: Routine calls?
+
+Patricia: Take a message, get their address and what pest they're dealing with, and we'll call back next business day to schedule.
+
+Sales Rep: Any software to know about?
+
+Patricia: We use PestPac. Never add customers or create service orders — human approval required.
