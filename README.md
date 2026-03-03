@@ -8,40 +8,39 @@ Zero-cost, locally-runnable pipeline that converts unstructured call transcripts
 
 ## 🏗️ Architecture and Data Flow
 
-```text
-Stage 1: Demo Call Transcript
-        │
-        ▼
-  ┌─────────────┐
-  │ Pipeline A  │  (scripts/pipeline_a.py)
-  ├─────────────┤
-  │ 1. Ingest transcript → normalize → assign account_id
-  │ 2. LLM extraction (Groq free API) OR rule-based fallback
-  │ 3. Build Account Memo JSON (v1)
-  │ 4. Generate Retell Agent Spec (v1)
-  │ 5. Save to outputs/accounts/<id>/v1/
-  │ 6. Create task tracker item → tasks/<id>.json
-  └─────────────┘
-        │
-        ▼  (onboarding call happens)
-        │
-Stage 2: Onboarding Transcript
-        │
-        ▼
-  ┌─────────────┐
-  │ Pipeline B  │  (scripts/pipeline_b.py)
-  ├─────────────┤
-  │ 1. Load v1 memo
-  │ 2. Extract updates from onboarding transcript
-  │ 3. Deep-patch v1 → v2 (non-destructive merge)
-  │ 4. Generate Account Memo JSON (v2)
-  │ 5. Generate Retell Agent Spec (v2)
-  │ 6. Produce changelog (JSON + Markdown)
-  │ 7. Save to outputs/accounts/<id>/v2/ + changelog/
-  └─────────────┘
-        │
-        ▼
-  Dashboard: docs/dashboard.html (zero-server static UI)
+```mermaid
+flowchart TD
+
+    A[Demo Call Transcript] --> B[Pipeline A]
+
+    subgraph Pipeline A
+        B1[Normalize + Assign Account ID]
+        B2[LLM Extraction / Rule Fallback]
+        B3[Generate Account Memo v1]
+        B4[Generate Retell Agent Spec v1]
+        B5[Save outputs/accounts/<id>]
+        B6[Create Task Tracker Item]
+    end
+
+    B --> B1 --> B2 --> B3 --> B4 --> B5 --> B6
+
+    B6 --> C[Onboarding Call Transcript]
+
+    C --> D[Pipeline B]
+
+    subgraph Pipeline B
+        D1[Load Memo v1]
+        D2[Extract Updates]
+        D3[Deep Merge v1 → v2]
+        D4[Generate Account Memo v2]
+        D5[Generate Retell Agent Spec v2]
+        D6[Generate Changelog]
+        D7[Save Updated Files]
+    end
+
+    D --> D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7
+
+    D7 --> E[Static Dashboard UI]
 ```
 
 ### LLM Strategy (Zero-Cost)
