@@ -1,0 +1,21 @@
+2026-03-03 16:36:08,116 [INFO] === Pipeline A started ===
+2026-03-03 16:36:08,118 [INFO] Transcript: sample_transcripts/demo_bens_electric.txt (107573 chars)
+2026-03-03 16:36:08,119 [INFO] Account ID: acc_bens_electric
+2026-03-03 16:36:08,360 [INFO] Extraction method: AI (Groq)
+2026-03-03 16:36:08,361 [INFO] Company name extracted: Nick and a few other folks
+2026-03-03 16:36:08,362 [INFO] Services: ['Electrical', 'Plumbing', 'Generator']
+2026-03-03 16:36:08,363 [INFO] Business hours: {'days': ['Thu', 'Fri'], 'start': '', 'end': '', 'timezone': ''}
+2026-03-03 16:36:08,364 [INFO] Questions/unknowns: ['Business hours (start/end time) not confirmed — to be finalized during onboarding.', 'Timezone not explicitly stated — confirm during onboarding.']
+2026-03-03 16:36:08,406 [INFO] v1 memo saved to outputs/accounts/acc_bens_electric/v1/account_memo.json
+2026-03-03 16:36:08,407 [INFO] v1 spec saved to outputs/accounts/acc_bens_electric/v1/agent_spec.json
+2026-03-03 16:36:08,408 [INFO] === Pipeline A complete ===
+2026-03-03 16:36:08,917 [INFO] === Pipeline B started ===
+2026-03-03 16:36:08,918 [INFO] Onboarding transcript: sample_transcripts/onboarding_bens_electric.txt
+2026-03-03 16:36:08,934 [INFO] v1 memo loaded successfully
+2026-03-03 16:36:08,940 [INFO] Onboarding transcript loaded (20831 chars)
+2026-03-03 16:36:09,106 [INFO] LLM returned no updates — falling back to rule-based extraction
+2026-03-03 16:36:09,118 [INFO] Updates extracted: ['office_address', 'services_supported', 'notes']
+2026-03-03 16:36:09,119 [INFO] 3 field(s) changed: ['notes', 'office_address', 'services_supported']
+2026-03-03 16:36:09,177 [INFO] v2 memo + spec saved to outputs/accounts/acc_bens_electric/v2/
+2026-03-03 16:36:09,178 [INFO] Changelog saved to changelog/acc_bens_electric_changelog.json
+2026-03-03 16:36:09,179 [INFO] === Pipeline B complete ===

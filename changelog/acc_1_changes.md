@@ -1,43 +1,33 @@
 # Changelog: acc_1
 
-**Generated:** 2026-03-03T13:43:01.240783Z
+**Generated:** 2026-03-03T16:36:03.869146Z
 **Version:** v1 → v2
-**Summary:** 7 field(s) updated during onboarding
+**Summary:** 5 field(s) updated during onboarding
 
 ## Changes
 
 ### `business_hours.days`
-- **Before:** `['Mon', 'Tue', 'Wed', 'Thu', 'Fri']`
-- **After:** `['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']`
+- **Before:** `['Mon', 'Fri', 'Sat']`
+- **After:** `['Sat']`
 - **Type:** list_updated
 
 ### `business_hours.end`
-- **Before:** `6:00pm`
-- **After:** `2:00pm`
+- **Before:** `6pm`
+- **After:** `2pm`
 - **Type:** value_updated
 
 ### `business_hours.start`
-- **Before:** `7:00am`
-- **After:** `8:00am`
+- **Before:** `7am`
+- **After:** `8am`
 - **Type:** value_updated
 
 ### `emergency_definition`
-- **Before:** `['burst pipe', 'no water pressure', 'sewage backup', 'flooding', 'gas smell near plumbing fixtures']`
-- **After:** `['burst pipe', 'no water pressure', 'sewage backup', 'flooding', 'gas smell near plumbing fixtures', 'water heater failure']`
+- **Before:** `['Flood', 'Burst Pipe']`
+- **After:** `['Flood', 'Burst Pipe', 'No heat/cool', 'Water leak', 'Fire/smoke alarm']`
 - **Type:** list_updated
 
-### `emergency_routing_rules.primary_contact`
-- **Before:** `Dave Kowalski 713-555-0192`
-- **After:** `Lisa Nguyen 713-555-0288`
-- **Type:** value_updated
-
-### `emergency_routing_rules.secondary_contact`
-- **Before:** `dispatch line 713-555-0100`
-- **After:** `Dave Kowalski 713-555-0192`
-- **Type:** value_updated
-
 ### `notes`
-- **Before:** `Saturday morning hours sometimes but not guaranteed`
-- **After:** `Saturday morning hours 8am-2pm. Weeknight emergencies route to Dave, weekends to Lisa. Agent must confirm full address for all emergencies.`
+- **Before:** `Extracted via rule-based fallback. LLM extraction was unavailable or returned no data.`
+- **After:** `Updated via rule-based onboarding extraction.`
 - **Type:** value_updated
 

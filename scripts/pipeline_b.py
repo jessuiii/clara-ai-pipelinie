@@ -5,6 +5,7 @@ Produces: updated memo, updated agent spec, changelog
 """
 
 import json
+import logging
 import os
 import re
 import sys
@@ -16,7 +17,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from pipeline_a import (
     OUTPUTS_DIR, CHANGELOG_DIR,
     extract_from_transcript_llm, extract_from_transcript_rules,
-    build_agent_spec, call_llm, derive_account_id
+    build_agent_spec, call_llm, derive_account_id, setup_logger
 )
 
 # ── Diff utilities ─────────────────────────────────────────────────────────────
@@ -207,34 +208,46 @@ def run_pipeline_b(onboarding_transcript_path: str, account_id: str) -> dict:
     print(f"\n[Pipeline B] Processing onboarding for: {account_id}")
     print(f"  Onboarding file: {onboarding_transcript_path}")
 
+    logger = setup_logger(account_id)
+    logger.info(f"=== Pipeline B started ===")
+    logger.info(f"Onboarding transcript: {onboarding_transcript_path}")
+
     # Load existing v1 memo
     v1_memo_path = OUTPUTS_DIR / account_id / "v1" / "account_memo.json"
     if not v1_memo_path.exists():
-        print(f"  [ERROR] No v1 memo found at {v1_memo_path}")
-        print(f"  Run Pipeline A first for account: {account_id}")
+        msg = f"No v1 memo found at {v1_memo_path}. Run Pipeline A first."
+        logger.error(msg)
+        print(f"  [ERROR] {msg}")
         sys.exit(1)
 
     with open(v1_memo_path) as f:
         v1_memo = json.load(f)
+    logger.info("v1 memo loaded successfully")
 
     # Read onboarding transcript
     with open(onboarding_transcript_path, "r", encoding="utf-8") as f:
         transcript = f.read()
+    logger.info(f"Onboarding transcript loaded ({len(transcript)} chars)")
 
     # Extract updates
     print("  → Extracting updates from onboarding transcript...")
     if v1_memo.get("company_name") in ["Unknown Company", "", None]:
+        logger.info("v1 memo is empty/rule-based — running full LLM extraction")
         print("  → v1 memo appears empty/rule-based. Running full LLM extraction instead of partial update...")
         updates = extract_from_transcript_llm(transcript)
     else:
         updates = extract_updates_llm(transcript, v1_memo)
-        
+
     if not updates:
+        logger.info("LLM returned no updates — falling back to rule-based extraction")
         print("  → Using rule-based update extraction")
         updates = extract_updates_rules(transcript, v1_memo)
 
     if not updates:
+        logger.info("No changes detected — onboarding confirmed existing config")
         print("  → No changes detected, onboarding confirmed existing config")
+
+    logger.info(f"Updates extracted: {list(updates.keys()) if updates else []}")
 
     # Merge
     v2_memo = merge_memos(v1_memo, updates)
@@ -243,6 +256,7 @@ def run_pipeline_b(onboarding_transcript_path: str, account_id: str) -> dict:
     changes = deep_diff(v1_memo, v2_memo)
     # Filter out metadata changes
     changes = [c for c in changes if c["field"] not in ("version", "updated_at", "created_at")]
+    logger.info(f"{len(changes)} field(s) changed: {[c['field'] for c in changes]}")
 
     # Build v2 agent spec
     print("  → Generating Retell agent spec v2...")
@@ -253,6 +267,10 @@ def run_pipeline_b(onboarding_transcript_path: str, account_id: str) -> dict:
 
     # Save everything
     save_v2_outputs(account_id, v2_memo, v2_spec, changelog)
+
+    logger.info(f"v2 memo + spec saved to outputs/accounts/{account_id}/v2/")
+    logger.info(f"Changelog saved to changelog/{account_id}_changelog.json")
+    logger.info(f"=== Pipeline B complete ===")
 
     print(f"\n[Done] {len(changes)} change(s) applied — v1 → v2")
     return {"account_id": account_id, "changes": len(changes), "memo_v2": v2_memo}

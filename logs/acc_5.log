@@ -1,0 +1,22 @@
+2026-03-03 16:36:07,137 [INFO] === Pipeline A started ===
+2026-03-03 16:36:07,139 [INFO] Transcript: sample_transcripts/demo_5.txt (1189 chars)
+2026-03-03 16:36:07,140 [INFO] Account ID: acc_5
+2026-03-03 16:36:07,285 [INFO] Extraction method: rule-based
+2026-03-03 16:36:07,286 [INFO] Company name extracted: Unknown Company
+2026-03-03 16:36:07,287 [INFO] Services: ['Roofing']
+2026-03-03 16:36:07,287 [INFO] Business hours: {'days': ['Mon', 'Fri', 'Sat'], 'start': '7am', 'end': '5pm', 'timezone': 'Central'}
+2026-03-03 16:36:07,288 [INFO] Questions/unknowns: []
+2026-03-03 16:36:07,325 [INFO] v1 memo saved to outputs/accounts/acc_5/v1/account_memo.json
+2026-03-03 16:36:07,327 [INFO] v1 spec saved to outputs/accounts/acc_5/v1/agent_spec.json
+2026-03-03 16:36:07,328 [INFO] === Pipeline A complete ===
+2026-03-03 16:36:07,836 [INFO] === Pipeline B started ===
+2026-03-03 16:36:07,837 [INFO] Onboarding transcript: sample_transcripts/onboarding_5.txt
+2026-03-03 16:36:07,854 [INFO] v1 memo loaded successfully
+2026-03-03 16:36:07,860 [INFO] Onboarding transcript loaded (775 chars)
+2026-03-03 16:36:07,861 [INFO] v1 memo is empty/rule-based — running full LLM extraction
+2026-03-03 16:36:07,999 [INFO] LLM returned no updates — falling back to rule-based extraction
+2026-03-03 16:36:08,001 [INFO] Updates extracted: ['emergency_definition', 'notes']
+2026-03-03 16:36:08,002 [INFO] 2 field(s) changed: ['emergency_definition', 'notes']
+2026-03-03 16:36:08,073 [INFO] v2 memo + spec saved to outputs/accounts/acc_5/v2/
+2026-03-03 16:36:08,076 [INFO] Changelog saved to changelog/acc_5_changelog.json
+2026-03-03 16:36:08,078 [INFO] === Pipeline B complete ===

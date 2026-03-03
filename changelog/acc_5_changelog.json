@@ -1,69 +1,30 @@
 {
   "account_id": "acc_5",
-  "changelog_generated_at": "2026-03-03T13:43:14.391320Z",
+  "changelog_generated_at": "2026-03-03T16:36:08.004107Z",
   "from_version": "v1",
   "to_version": "v2",
-  "source_file": "sample_transcripts\\onboarding_5.txt",
-  "summary": "6 field(s) updated during onboarding",
+  "source_file": "sample_transcripts/onboarding_5.txt",
+  "summary": "2 field(s) updated during onboarding",
   "changes": [
-    {
-      "field": "after_hours_flow_summary",
-      "old": "Contact field supervisor Dana Price for emergencies; if no answer try main dispatch; if still no answer take message and promise 2-hour callback for weather emergencies",
-      "new": "Contact field supervisor Dana Price for emergencies; if no answer try main dispatch; if still no answer take message and promise 4-hour callback for weather emergencies",
-      "change_type": "value_updated"
-    },
-    {
-      "field": "business_hours.days",
-      "old": [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri"
-      ],
-      "new": [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
-        "Sat"
-      ],
-      "change_type": "list_updated"
-    },
-    {
-      "field": "call_transfer_rules.if_transfer_fails",
-      "old": "promise callback within 2 hours for weather emergencies",
-      "new": "promise callback within 4 hours for weather emergencies",
-      "change_type": "value_updated"
-    },
     {
       "field": "emergency_definition",
       "old": [
-        "active water infiltration into a structure",
-        "structural damage from storm",
-        "fallen tree on roof",
-        "building unsafe"
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm"
       ],
       "new": [
-        "active water infiltration into a structure",
-        "structural damage from storm",
-        "fallen tree on roof",
-        "building unsafe",
-        "hail damage assessment requests"
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm",
+        "Urgent"
       ],
       "change_type": "list_updated"
     },
     {
-      "field": "non_emergency_routing_rules.destination",
-      "old": "Summit Roofing Group",
-      "new": "615-555-0050",
-      "change_type": "value_updated"
-    },
-    {
       "field": "notes",
-      "old": "Saturday hours 8am-noon during busy season; storm damage is main emergency type",
-      "new": "Saturday hours 8am-noon year-round; storm damage is main emergency type",
+      "old": "Extracted via rule-based fallback. LLM extraction was unavailable or returned no data.",
+      "new": "Updated via rule-based onboarding extraction.",
       "change_type": "value_updated"
     }
   ]

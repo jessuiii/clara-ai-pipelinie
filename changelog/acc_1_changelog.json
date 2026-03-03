@@ -1,77 +1,54 @@
 {
   "account_id": "acc_1",
-  "changelog_generated_at": "2026-03-03T13:43:01.240783Z",
+  "changelog_generated_at": "2026-03-03T16:36:03.869146Z",
   "from_version": "v1",
   "to_version": "v2",
-  "source_file": "sample_transcripts\\onboarding_1.txt",
-  "summary": "7 field(s) updated during onboarding",
+  "source_file": "sample_transcripts/onboarding_1.txt",
+  "summary": "5 field(s) updated during onboarding",
   "changes": [
     {
       "field": "business_hours.days",
       "old": [
         "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri"
+        "Fri",
+        "Sat"
       ],
       "new": [
-        "Mon",
-        "Tue",
-        "Wed",
-        "Thu",
-        "Fri",
         "Sat"
       ],
       "change_type": "list_updated"
     },
     {
       "field": "business_hours.end",
-      "old": "6:00pm",
-      "new": "2:00pm",
+      "old": "6pm",
+      "new": "2pm",
       "change_type": "value_updated"
     },
     {
       "field": "business_hours.start",
-      "old": "7:00am",
-      "new": "8:00am",
+      "old": "7am",
+      "new": "8am",
       "change_type": "value_updated"
     },
     {
       "field": "emergency_definition",
       "old": [
-        "burst pipe",
-        "no water pressure",
-        "sewage backup",
-        "flooding",
-        "gas smell near plumbing fixtures"
+        "Flood",
+        "Burst Pipe"
       ],
       "new": [
-        "burst pipe",
-        "no water pressure",
-        "sewage backup",
-        "flooding",
-        "gas smell near plumbing fixtures",
-        "water heater failure"
+        "Flood",
+        "Burst Pipe",
+        "No heat/cool",
+        "Water leak",
+        "Fire/smoke alarm"
       ],
       "change_type": "list_updated"
     },
     {
-      "field": "emergency_routing_rules.primary_contact",
-      "old": "Dave Kowalski 713-555-0192",
-      "new": "Lisa Nguyen 713-555-0288",
-      "change_type": "value_updated"
-    },
-    {
-      "field": "emergency_routing_rules.secondary_contact",
-      "old": "dispatch line 713-555-0100",
-      "new": "Dave Kowalski 713-555-0192",
-      "change_type": "value_updated"
-    },
-    {
       "field": "notes",
-      "old": "Saturday morning hours sometimes but not guaranteed",
-      "new": "Saturday morning hours 8am-2pm. Weeknight emergencies route to Dave, weekends to Lisa. Agent must confirm full address for all emergencies.",
+      "old": "Extracted via rule-based fallback. LLM extraction was unavailable or returned no data.",
+      "new": "Updated via rule-based onboarding extraction.",
       "change_type": "value_updated"
     }
   ]

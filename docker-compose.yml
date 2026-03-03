@@ -1,6 +1,6 @@
-version: "3.8"
-
 services:
+
+  # ── n8n workflow orchestrator ──────────────────────────────────────────────
   n8n:
     image: n8nio/n8n:latest
     container_name: clara-n8n
@@ -16,12 +16,29 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/New_York
-      # Optional: set your Groq API key for LLM extraction
       - GROQ_API_KEY=${GROQ_API_KEY:-}
     volumes:
       - n8n_data:/home/node/.n8n
-      # Mount the pipeline code so n8n can execute it
-      - ./:/data/clara-pipeline
+      # Mount pipeline code so n8n Execute Command nodes can call scripts
+      - .:/data/clara-pipeline
+
+  # ── Pipeline runner (Python scripts) ──────────────────────────────────────
+  # Runs the full 5+5 batch automatically via run_batch.py.
+  # Usage:
+  #   docker-compose run --rm pipeline-runner              # full batch
+  #   docker-compose run --rm pipeline-runner python scripts/pipeline_a.py sample_transcripts/demo_bens_electric.txt bens_electric
+  pipeline-runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: clara-pipeline
+    environment:
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
+    volumes:
+      # Live-mount so outputs/ and logs/ written inside container appear on host
+      - .:/app
+    # Keeps container available for exec without auto-running
+    command: ["python", "scripts/run_batch.py"]
 
 volumes:
   n8n_data:
