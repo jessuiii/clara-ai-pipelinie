@@ -6,14 +6,16 @@ Zero-cost, locally-runnable pipeline that processes call transcripts and generat
 
 ---
 
-## Architecture
+## 🏗️ Architecture Stack
 
-```
+The pipeline is designed to transform unstructured call transcripts into structured JSON specifications for AI voice agents (like Retell AI), automatically applying updates as the client goes through onboarding.
+
+```text
 demo_transcript.txt
         │
         ▼
   [ Pipeline A ]
-  ├── Extract account memo (LLM or rule-based)
+  ├── Extract account memo (LLM via Groq API, or rule-based fallback)
   ├── Generate Retell Agent Spec v1
   └── outputs/accounts/<id>/v1/
              account_memo.json
@@ -25,7 +27,7 @@ onboarding_transcript.txt
         ▼
   [ Pipeline B ]
   ├── Extract updates from onboarding
-  ├── Merge v1 → v2 (deep patch)
+  ├── Merge v1 → v2 (deep patch structure)
   ├── Generate diff + changelog
   ├── Generate Retell Agent Spec v2
   └── outputs/accounts/<id>/v2/
@@ -36,140 +38,93 @@ onboarding_transcript.txt
     <id>_changes.md
 ```
 
-**LLM Strategy (Zero-Cost):**
-- If `GROQ_API_KEY` is set: uses Groq's `moonshotai/kimi-k2-instruct` model (completely free via API)
-- If no API key: falls back to rule-based regex extraction automatically
-- Both paths produce identical output schemas
+### LLM Extraction Strategy (Zero-Cost):
+- If `GROQ_API_KEY` is set: The pipeline uses the highly capable `moonshotai/kimi-k2-instruct` model via Groq's high-speed, completely free API tier.
+- If no API key is provided: The pipeline automatically falls back to local Regex rule-based extraction (completely offline, zero dependencies).
+- **Both paths produce identical output schemas.**
 
 ---
 
-## Quick Start
+## ⚡ Quick Start
 
 ### 1. Prerequisites
-
+No heavy packages needed. The pipeline uses standard built-in Python libraries (`urllib`, `json`, `re`).
 ```bash
-python3 --version   # 3.9+
-# No extra packages required — uses standard urllib for LLM extraction
+python3 --version   # 3.9+ recommended
 ```
 
-### 2. Clone and set up
-
+### 2. Setup
 ```bash
-git clone <your-repo-url>
+git clone https://github.com/jessuiii/clara-ai-pipelinie.git
 cd clara-ai-pipeline
 ```
 
-### 3. (Optional) Set API key for LLM extraction
-
+### 3. Provide Groq API Key (Highly Recommended)
+Using Groq enables intelligent LLM extraction parsing instead of static regex fallbacks.
 ```bash
-export GROQ_API_KEY=gsk_...   # get a free key from console.groq.com
+export GROQ_API_KEY=gsk_...   # Get a free API key at console.groq.com
 ```
 
-Without this, rule-based extraction runs automatically. No cost either way.
-
-### 4. Run Pipeline A (demo call → v1 agent)
-
+### 4. Run Pipeline A (Demo Call → v1 Agent)
+Processes a demo transcript and generates the initial `v1` configuration for an account.
 ```bash
 python scripts/pipeline_a.py sample_transcripts/demo_1.txt acc_1
 ```
+Creates: `outputs/accounts/acc_1/v1/account_memo.json` and `agent_spec.json`
 
-**Output:**
-```
-outputs/accounts/acc_1/v1/account_memo.json
-outputs/accounts/acc_1/v1/agent_spec.json
-```
-
-### 5. Run Pipeline B (onboarding → v2 agent)
-
+### 5. Run Pipeline B (Onboarding Call → v2 Agent)
+Processes an onboarding transcript to extract updates, merge them with `v1`, and produce a `v2` configuration + changelog.
 ```bash
 python scripts/pipeline_b.py sample_transcripts/onboarding_1.txt acc_1
 ```
+Creates: `outputs/accounts/acc_1/v2/account_memo.json`, `agent_spec.json`, and markdown changelogs in the `changelog/` directory.
 
-**Output:**
-```
-outputs/accounts/acc_1/v2/account_memo.json
-outputs/accounts/acc_1/v2/agent_spec.json
-changelog/acc_1_changelog.json
-changelog/acc_1_changes.md
-```
-
-### 6. Run Full Batch (all 10 files)
-
+### 6. Run the Full Batch
+Process a whole folder of paired `demo_N` and `onboarding_N` transcripts automatically:
 ```bash
 python scripts/run_batch.py --dataset-dir ./sample_transcripts
 ```
 
-This auto-pairs `demo_N.txt` with `onboarding_N.txt` files and runs both pipelines.
+---
+
+## 📊 Dashboard Visualizer
+
+A static HTML dashboard is included to review all generated accounts, see version comparisons, and explore prompt outputs! No server is required.
+
+**How to open:**
+Simply open the `docs/dashboard.html` file in your web browser.
+- View generated system prompts.
+- See a visual diff tracker showing the exact fields changed between `v1` and `v2`.
+- View the active configurations (Hours, Routing, Services, etc.).
 
 ---
 
-## Plug In Your Dataset
+## ⚙️ n8n Workflow (Docker Setup)
 
-Naming convention for auto-pairing:
-```
-sample_transcripts/
-  demo_acmeplumbing.txt        → account: acc_acmeplumbing
-  onboarding_acmeplumbing.txt  → matches above
-  demo_arctic_hvac.txt
-  onboarding_arctic_hvac.txt
-  ...
-```
+This pipeline includes an n8n workflow for deploying this as a local web service.
 
-Or use explicit file args:
-```bash
-python scripts/run_batch.py \
-  --demo-files demo1.txt demo2.txt ... \
-  --onboarding-files onboard1.txt onboard2.txt ...
-```
-
----
-
-## n8n Workflow (Self-Hosted, Free)
-
-### Start n8n with Docker
-
+### Start n8n container
 ```bash
 cp .env.example .env
-# Edit .env and add GROQ_API_KEY if desired
+# Edit .env to add your GROQ_API_KEY
 
 docker-compose up -d
 ```
+1. Access n8n at `http://localhost:5678` (credentials: admin / claraai123)
+2. Go to **Workflows → Import**, and upload the `workflows/clara_pipeline_n8n.json` file.
+3. Activate the workflow!
 
-n8n runs at http://localhost:5678 (login: admin / claraai123)
-
-### Import workflow
-
-1. Open n8n at http://localhost:5678
-2. Click **Workflows → Import**
-3. Select `workflows/clara_pipeline_n8n.json`
-4. Activate the workflow
-
-### Trigger via webhook
-
-**Run Pipeline A:**
-```bash
-curl -X POST http://localhost:5678/webhook/pipeline-a \
-  -H "Content-Type: application/json" \
-  -d '{"transcript_path": "/data/clara-pipeline/sample_transcripts/demo_1.txt", "account_id": "acc_1"}'
-```
-
-**Run Pipeline B:**
-```bash
-curl -X POST http://localhost:5678/webhook/pipeline-b \
-  -H "Content-Type: application/json" \
-  -d '{"transcript_path": "/data/clara-pipeline/sample_transcripts/onboarding_1.txt", "account_id": "acc_1"}'
-```
-
-**Run Full Batch:**
+### Trigger Endpoints:
 ```bash
 curl -X POST http://localhost:5678/webhook/batch
 ```
 
 ---
 
-## Output File Reference
+## 📂 File Output Schemas
 
 ### `account_memo.json`
+Stores the semantic state of the company's rules.
 ```json
 {
   "account_id": "acc_1",
@@ -193,15 +148,16 @@ curl -X POST http://localhost:5678/webhook/batch
 ```
 
 ### `agent_spec.json`
+The output schema designed for the AI voice agent configurations.
 ```json
 {
   "agent_name": "Clara",
   "version": "v1",
   "account_id": "acc_1",
-  "created_at": "2026-03-03T...",
+  "created_at": "2026-03-03T15:20:10.00Z",
   "voice_style": { "provider": "elevenlabs", "voice_id": "rachel", "speed": 1.0, "stability": 0.75 },
   "system_prompt": "...(full generated prompt)...",
-  "key_variables": { "timezone": "...", "business_hours_start": "...", ... },
+  "key_variables": { "timezone": "...", "business_hours_start": "...", "business_days": ["Mon"] },
   "tool_invocation_placeholders": { "transfer_call": {...}, "create_ticket": {...} },
   "call_transfer_protocol": { "timeout_seconds": 30, "retries": 1, "on_failure": "..." },
   "fallback_protocol": { "message": "...", "collect_before_fallback": ["name","phone"], "emergency_addition": ["address"] },
@@ -210,10 +166,11 @@ curl -X POST http://localhost:5678/webhook/batch
 ```
 
 ### `changelog/acc_1_changes.md`
+Human-readable markdown diff of configuration updates.
 ```markdown
 # Changelog: acc_1
 
-**Generated:** 2026-03-03T...
+**Generated:** 2026-03-03T15:20:10.0Z
 **Version:** v1 → v2
 **Summary:** 5 field(s) updated during onboarding
 
@@ -227,91 +184,29 @@ curl -X POST http://localhost:5678/webhook/batch
 
 ---
 
-## Retell Setup (Manual Import)
+## 📌 Project Directory
 
-If Retell's free tier doesn't allow programmatic agent creation:
-
-1. Create account at https://retell.ai
-2. Go to **Agents → Create Agent**
-3. Open `outputs/accounts/<id>/v2/agent_spec.json`
-4. Copy `system_prompt` into the agent's System Prompt field
-5. Configure:
-   - Voice: ElevenLabs Rachel (or closest available)
-   - Transfer number: from `key_variables.emergency_contact_primary`
-   - Timezone: from `key_variables.timezone`
-6. Save and test
-
----
-
-## Dashboard
-
-Open `docs/dashboard.html` in any browser — no server needed. Shows:
-- All accounts with v1/v2 status
-- Service tags, routing, hours
-- v1 → v2 diff viewer
-- Generated system prompts
-- Raw JSON viewer
-
----
-
-## File Structure
-
-```
+```text
 clara-ai-pipeline/
 ├── scripts/
-│   ├── pipeline_a.py          # Demo transcript → v1 assets
-│   ├── pipeline_b.py          # Onboarding → v2 assets + changelog
-│   └── run_batch.py           # Batch runner for all files
+│   ├── pipeline_a.py            # Demo transcript → v1 assets
+│   ├── pipeline_b.py            # Onboarding → v2 assets + changelog
+│   └── run_batch.py             # Batch runner utility
 ├── workflows/
-│   └── clara_pipeline_n8n.json  # n8n workflow export
+│   └── clara_pipeline_n8n.json  # n8n webhook workflow
 ├── outputs/
 │   ├── accounts/
 │   │   └── <account_id>/
-│   │       ├── v1/
-│   │       │   ├── account_memo.json
-│   │       │   └── agent_spec.json
-│   │       └── v2/
-│   │           ├── account_memo.json
-│   │           └── agent_spec.json
+│   │       ├── v1/ ...
+│   │       └── v2/ ...
 │   └── batch_summary.json
-├── changelog/
-│   ├── <id>_changelog.json
-│   └── <id>_changes.md
-├── sample_transcripts/
-│   ├── demo_1.txt ... demo_5.txt
-│   └── onboarding_1.txt ... onboarding_5.txt
+├── changelog/                   # Markdown and JSON changelog diffs
+├── sample_transcripts/          # Testing text files (.txt)
 ├── docs/
-│   └── dashboard.html         # Visual dashboard (open in browser)
-├── docker-compose.yml         # n8n self-hosted setup
+│   └── dashboard.html           # Project visualization UI
+├── docker-compose.yml           # Container setup for n8n API
+├── test_groq.py                 # Tiny script to test Groq API Auth
 └── README.md
 ```
 
----
-
-## Known Limitations
-
-- **LLM extraction without API key**: Rule-based fallback is reliable for structured transcripts but may miss nuanced context or unusual phrasing. With `GROQ_API_KEY`, extraction quality improves significantly.
-- **Audio transcription**: Not included. Accepts `.txt` / `.md` transcript files. For audio, run Whisper locally (`pip install openai-whisper`) and pipe output as a transcript file.
-- **Retell API**: Free tier may not support programmatic agent creation. The `agent_spec.json` is designed for manual paste or Retell API v2 once available.
-- **Idempotency**: Running twice overwrites outputs — no duplicate creation. Safe to re-run.
-
-## What Would Improve With Production Access
-
-- **Retell API integration**: Directly create/update agents via API instead of manual import.
-- **Whisper transcription node**: Auto-transcribe audio uploads in the n8n workflow.
-- **Webhook for task tracking**: Auto-create Asana/Linear tasks per account via API.
-- **Supabase storage**: Replace local JSON files with Supabase for multi-user access and real-time sync.
-- **Confidence scoring**: Flag low-confidence extractions for human review.
-- **Prompt versioning**: Track prompt changes alongside config changes.
-
----
-
-## Environment Variables
-
-| Variable | Required | Description |
-|---|---|---|
-| `GROQ_API_KEY` | No | Enables LLM extraction (Zero cost via Groq) |
-
----
-
-*Built for Clara AI intern assignment — zero-cost, reproducible, end-to-end.*
+*Built for Clara AI — zero-cost, reproducible, end-to-end processing pipeline.*
