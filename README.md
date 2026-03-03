@@ -37,7 +37,7 @@ onboarding_transcript.txt
 ```
 
 **LLM Strategy (Zero-Cost):**
-- If `ANTHROPIC_API_KEY` is set: uses `claude-haiku-4-5` (cheapest model, ~$0.001/call, or use free credits)
+- If `GROQ_API_KEY` is set: uses Groq's `moonshotai/kimi-k2-instruct` model (completely free via API)
 - If no API key: falls back to rule-based regex extraction automatically
 - Both paths produce identical output schemas
 
@@ -49,7 +49,7 @@ onboarding_transcript.txt
 
 ```bash
 python3 --version   # 3.9+
-pip install anthropic  # optional — only for LLM extraction
+# No extra packages required — uses standard urllib for LLM extraction
 ```
 
 ### 2. Clone and set up
@@ -62,7 +62,7 @@ cd clara-ai-pipeline
 ### 3. (Optional) Set API key for LLM extraction
 
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # free tier works
+export GROQ_API_KEY=gsk_...   # get a free key from console.groq.com
 ```
 
 Without this, rule-based extraction runs automatically. No cost either way.
@@ -130,7 +130,7 @@ python scripts/run_batch.py \
 
 ```bash
 cp .env.example .env
-# Edit .env and add ANTHROPIC_API_KEY if desired
+# Edit .env and add GROQ_API_KEY if desired
 
 docker-compose up -d
 ```
@@ -290,7 +290,7 @@ clara-ai-pipeline/
 
 ## Known Limitations
 
-- **LLM extraction without API key**: Rule-based fallback is reliable for structured transcripts but may miss nuanced context or unusual phrasing. With `ANTHROPIC_API_KEY`, extraction quality improves significantly.
+- **LLM extraction without API key**: Rule-based fallback is reliable for structured transcripts but may miss nuanced context or unusual phrasing. With `GROQ_API_KEY`, extraction quality improves significantly.
 - **Audio transcription**: Not included. Accepts `.txt` / `.md` transcript files. For audio, run Whisper locally (`pip install openai-whisper`) and pipe output as a transcript file.
 - **Retell API**: Free tier may not support programmatic agent creation. The `agent_spec.json` is designed for manual paste or Retell API v2 once available.
 - **Idempotency**: Running twice overwrites outputs — no duplicate creation. Safe to re-run.
@@ -310,7 +310,7 @@ clara-ai-pipeline/
 
 | Variable | Required | Description |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | No | Enables LLM extraction (Haiku model, minimal cost) |
+| `GROQ_API_KEY` | No | Enables LLM extraction (Zero cost via Groq) |
 
 ---
 
