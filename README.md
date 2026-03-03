@@ -174,15 +174,17 @@ curl -X POST http://localhost:5678/webhook/batch
 {
   "account_id": "acc_1",
   "version": "v1",
-  "company_name": "AcmePlumbing Inc.",
-  "business_hours": { "days": ["Mon","Fri"], "start": "7:00am", "end": "6:00pm", "timezone": "Central" },
-  "office_address": "1452 Industrial Blvd, Houston TX 77002",
-  "services_supported": ["Plumbing", "Drain Cleaning"],
-  "emergency_definition": ["Burst Pipe", "Flooding"],
-  "emergency_routing_rules": { "primary_contact": "...", "fallback": "..." },
+  "created_at": "2026-03-03T12:23:03.626800Z",
+  "source_file": "sample_transcripts/demo_1.txt",
+  "company_name": "AcmePlumbing",
+  "business_hours": { "days": ["Mon","Fri","Sat"], "start": "7am", "end": "6pm", "timezone": "Central" },
+  "office_address": "1452 Industrial Blvd,",
+  "services_supported": ["Cleaning", "Plumbing"],
+  "emergency_definition": ["Flood", "Burst Pipe"],
+  "emergency_routing_rules": { "primary": "...", "fallback": "...", "secondary": "..." },
   "non_emergency_routing_rules": { "action": "take message", "destination": "..." },
   "call_transfer_rules": { "timeout_seconds": 30, "retries": 1, "if_transfer_fails": "..." },
-  "integration_constraints": ["Never create jobs in ServiceTrade"],
+  "integration_constraints": [],
   "after_hours_flow_summary": "...",
   "office_hours_flow_summary": "...",
   "questions_or_unknowns": [],
@@ -195,12 +197,14 @@ curl -X POST http://localhost:5678/webhook/batch
 {
   "agent_name": "Clara",
   "version": "v1",
-  "voice_style": { "provider": "elevenlabs", "voice_id": "rachel" },
+  "account_id": "acc_1",
+  "created_at": "2026-03-03T...",
+  "voice_style": { "provider": "elevenlabs", "voice_id": "rachel", "speed": 1.0, "stability": 0.75 },
   "system_prompt": "...(full generated prompt)...",
   "key_variables": { "timezone": "...", "business_hours_start": "...", ... },
   "tool_invocation_placeholders": { "transfer_call": {...}, "create_ticket": {...} },
   "call_transfer_protocol": { "timeout_seconds": 30, "retries": 1, "on_failure": "..." },
-  "fallback_protocol": { "message": "...", "collect_before_fallback": ["name","phone"] },
+  "fallback_protocol": { "message": "...", "collect_before_fallback": ["name","phone"], "emergency_addition": ["address"] },
   "integration_constraints": [...]
 }
 ```
@@ -209,15 +213,15 @@ curl -X POST http://localhost:5678/webhook/batch
 ```markdown
 # Changelog: acc_1
 
-**Generated:** 2025-02-01T...
+**Generated:** 2026-03-03T...
 **Version:** v1 → v2
-**Summary:** 3 field(s) updated during onboarding
+**Summary:** 5 field(s) updated during onboarding
 
 ## Changes
 
 ### `business_hours.days`
-- **Before:** `["Mon","Tue","Wed","Thu","Fri"]`
-- **After:** `["Mon","Tue","Wed","Thu","Fri","Sat"]`
+- **Before:** `['Mon', 'Fri', 'Sat']`
+- **After:** `['Sat']`
 - **Type:** list_updated
 ```
 
