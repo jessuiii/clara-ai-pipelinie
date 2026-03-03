@@ -16,8 +16,8 @@ services:
       - N8N_PROTOCOL=http
       - WEBHOOK_URL=http://localhost:5678/
       - GENERIC_TIMEZONE=America/New_York
-      # Optional: set your Anthropic API key for LLM extraction
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      # Optional: set your Groq API key for LLM extraction
+      - GROQ_API_KEY=${GROQ_API_KEY:-}
     volumes:
       - n8n_data:/home/node/.n8n
       # Mount the pipeline code so n8n can execute it

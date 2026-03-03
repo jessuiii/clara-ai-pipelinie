@@ -1,0 +1,70 @@
+{
+  "account_id": "bens_electric",
+  "changelog_generated_at": "2026-03-03T16:07:32.434454Z",
+  "from_version": "v1",
+  "to_version": "v2",
+  "source_file": "sample_transcripts/onboarding_bens_electric.txt",
+  "summary": "8 field(s) updated during onboarding",
+  "changes": [
+    {
+      "field": "after_hours_flow_summary",
+      "old": "Ben is on call and may answer or defer to another service",
+      "new": "Clara answers, patches through to Ben if caller is from G and M pressure washing",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "business_hours.end",
+      "old": null,
+      "new": "4:30",
+      "change_type": "added"
+    },
+    {
+      "field": "business_hours.start",
+      "old": null,
+      "new": "8:00",
+      "change_type": "added"
+    },
+    {
+      "field": "emergency_definition",
+      "old": [
+        "emergency calls from regular property managers and general contractors"
+      ],
+      "new": [
+        "emergency calls from regular property managers and general contractors",
+        "emergency calls from G and M pressure washing (for properties they manage, e.g. Chevron gas stations)"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "emergency_routing_rules.fallback",
+      "old": "defer to another service",
+      "new": "patch through to Ben if caller is from G and M pressure washing",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "notes",
+      "old": "Ben has 30 years of experience as an electrician and has been running his own business for 8 years. He has a team of 3 full-time electricians and 1 apprentice, and uses Jobber as his CRM.",
+      "new": "Ben has a service call fee of $115, and an hourly charge of $98. Ben wants Clara to mention the service call fee if the caller inquires about it.",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "office_hours_flow_summary",
+      "old": "Ben manages operations and answers calls",
+      "new": "Ben manages operations and answers calls, Clara answers and transfers to Ben if necessary",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "questions_or_unknowns",
+      "old": [
+        "What is the exact business hours and timezone?",
+        "What is the office address?"
+      ],
+      "new": [
+        "What is the exact business hours and timezone?",
+        "What is the office address?",
+        "What is the exact timezone?"
+      ],
+      "change_type": "list_updated"
+    }
+  ]
+}

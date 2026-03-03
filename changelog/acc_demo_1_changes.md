@@ -1,8 +1,8 @@
-# Changelog: acc_1
+# Changelog: acc_demo_1
 
-**Generated:** 2026-03-03T13:43:01.240783Z
+**Generated:** 2026-03-03T12:58:04.451979Z
 **Version:** v1 → v2
-**Summary:** 7 field(s) updated during onboarding
+**Summary:** 5 field(s) updated during onboarding
 
 ## Changes
 
@@ -10,16 +10,6 @@
 - **Before:** `['Mon', 'Tue', 'Wed', 'Thu', 'Fri']`
 - **After:** `['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']`
 - **Type:** list_updated
-
-### `business_hours.end`
-- **Before:** `6:00pm`
-- **After:** `2:00pm`
-- **Type:** value_updated
-
-### `business_hours.start`
-- **Before:** `7:00am`
-- **After:** `8:00am`
-- **Type:** value_updated
 
 ### `emergency_definition`
 - **Before:** `['burst pipe', 'no water pressure', 'sewage backup', 'flooding', 'gas smell near plumbing fixtures']`
@@ -37,7 +27,7 @@
 - **Type:** value_updated
 
 ### `notes`
-- **Before:** `Saturday morning hours sometimes but not guaranteed`
-- **After:** `Saturday morning hours 8am-2pm. Weeknight emergencies route to Dave, weekends to Lisa. Agent must confirm full address for all emergencies.`
+- **Before:** `Saturday morning hours are sometimes open but not guaranteed.`
+- **After:** `Saturday hours 8am-2pm Central. Weeknight emergencies: Dave Kowalski first, Lisa Nguyen secondary. Weekend emergencies: Lisa Nguyen first, Dave Kowalski secondary. Agent must confirm caller's full address for any emergency.`
 - **Type:** value_updated
 

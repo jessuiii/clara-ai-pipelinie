@@ -1,10 +1,10 @@
 {
-  "account_id": "acc_1",
-  "changelog_generated_at": "2026-03-03T13:43:01.240783Z",
+  "account_id": "acc_demo_1",
+  "changelog_generated_at": "2026-03-03T12:58:04.451979Z",
   "from_version": "v1",
   "to_version": "v2",
-  "source_file": "sample_transcripts\\onboarding_1.txt",
-  "summary": "7 field(s) updated during onboarding",
+  "source_file": "sample_transcripts/onboarding_1.txt",
+  "summary": "5 field(s) updated during onboarding",
   "changes": [
     {
       "field": "business_hours.days",
@@ -24,18 +24,6 @@
         "Sat"
       ],
       "change_type": "list_updated"
-    },
-    {
-      "field": "business_hours.end",
-      "old": "6:00pm",
-      "new": "2:00pm",
-      "change_type": "value_updated"
-    },
-    {
-      "field": "business_hours.start",
-      "old": "7:00am",
-      "new": "8:00am",
-      "change_type": "value_updated"
     },
     {
       "field": "emergency_definition",
@@ -70,8 +58,8 @@
     },
     {
       "field": "notes",
-      "old": "Saturday morning hours sometimes but not guaranteed",
-      "new": "Saturday morning hours 8am-2pm. Weeknight emergencies route to Dave, weekends to Lisa. Agent must confirm full address for all emergencies.",
+      "old": "Saturday morning hours are sometimes open but not guaranteed.",
+      "new": "Saturday hours 8am-2pm Central. Weeknight emergencies: Dave Kowalski first, Lisa Nguyen secondary. Weekend emergencies: Lisa Nguyen first, Dave Kowalski secondary. Agent must confirm caller's full address for any emergency.",
       "change_type": "value_updated"
     }
   ]

@@ -1,49 +1,96 @@
 {
   "account_id": "acc_4",
-  "changelog_generated_at": "2026-03-03T12:53:52.113468Z",
+  "changelog_generated_at": "2026-03-03T13:43:11.191822Z",
   "from_version": "v1",
   "to_version": "v2",
   "source_file": "sample_transcripts\\onboarding_4.txt",
-  "summary": "5 field(s) updated during onboarding",
+  "summary": "9 field(s) updated during onboarding",
   "changes": [
+    {
+      "field": "after_hours_flow_summary",
+      "old": "Emergency calls go to Kyle Ramos; if no answer in 45s, answering service pages him. Non-emergency: take message for next-day callback.",
+      "new": "Emergency calls go to Diane Foster; if no answer in 45s, answering service pages her. Non-emergency: take message for next-day callback.",
+      "change_type": "value_updated"
+    },
     {
       "field": "business_hours.days",
       "old": [
         "Mon",
-        "Sat",
-        "Sun"
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat"
       ],
       "new": [
+        "Mon",
+        "Tue",
+        "Wed",
+        "Thu",
+        "Fri",
+        "Sat",
         "Sun"
       ],
       "change_type": "list_updated"
     },
     {
-      "field": "business_hours.end",
-      "old": "6pm",
-      "new": "3pm",
+      "field": "call_transfer_rules.if_transfer_fails",
+      "old": "answering service pages Kyle",
+      "new": "answering service pages Diane",
       "change_type": "value_updated"
     },
     {
-      "field": "business_hours.start",
-      "old": "7am",
-      "new": "9am",
+      "field": "emergency_routing_rules.fallback",
+      "old": "answering service pages Kyle",
+      "new": "answering service pages Diane",
       "change_type": "value_updated"
+    },
+    {
+      "field": "emergency_routing_rules.primary_contact",
+      "old": "Kyle Ramos 602-555-0850",
+      "new": "Diane Foster 602-555-0920",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "integration_constraints",
+      "old": [
+        "never add customers or create service orders in PestPac"
+      ],
+      "new": [
+        "never add customers or create service orders in PestPac",
+        "never give out technician home addresses to callers"
+      ],
+      "change_type": "list_updated"
     },
     {
       "field": "notes",
-      "old": "Extracted via rule-based fallback.",
-      "new": "Updated via rule-based onboarding extraction.",
+      "old": "Closed Sundays; human approval required for all PestPac actions",
+      "new": "Closed Sundays except 9am-3pm for residential; human approval required for all PestPac actions; never give out technician home addresses",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "office_hours_flow_summary",
+      "old": "Take message for next-day callback; no transfers or order creation in PestPac.",
+      "new": "Take message for next-day callback; no transfers or order creation in PestPac. Sunday 9am-3pm residential calls only.",
       "change_type": "value_updated"
     },
     {
       "field": "services_supported",
       "old": [
-        "Pest Control"
+        "commercial pest control",
+        "residential pest control",
+        "termite treatment",
+        "rodent exclusion",
+        "bed bug remediation"
       ],
       "new": [
-        "Pest Control",
-        "General Facility Services"
+        "commercial pest control",
+        "residential pest control",
+        "termite treatment",
+        "rodent exclusion",
+        "bed bug remediation",
+        "bird exclusion",
+        "bat exclusion"
       ],
       "change_type": "list_updated"
     }

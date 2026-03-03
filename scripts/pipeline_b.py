@@ -93,7 +93,7 @@ Return JSON with any subset of these fields:
 
 def extract_updates_llm(transcript: str, existing_memo: dict) -> dict:
     memo_str = json.dumps(existing_memo, indent=2)[:3000]
-    prompt = UPDATE_PROMPT.format(existing_memo=memo_str, transcript=transcript[:6000])
+    prompt = UPDATE_PROMPT.format(existing_memo=memo_str, transcript=transcript[:18000])
     response = call_llm(prompt)
     if not response:
         return {}
@@ -223,7 +223,12 @@ def run_pipeline_b(onboarding_transcript_path: str, account_id: str) -> dict:
 
     # Extract updates
     print("  → Extracting updates from onboarding transcript...")
-    updates = extract_updates_llm(transcript, v1_memo)
+    if v1_memo.get("company_name") in ["Unknown Company", "", None]:
+        print("  → v1 memo appears empty/rule-based. Running full LLM extraction instead of partial update...")
+        updates = extract_from_transcript_llm(transcript)
+    else:
+        updates = extract_updates_llm(transcript, v1_memo)
+        
     if not updates:
         print("  → Using rule-based update extraction")
         updates = extract_updates_rules(transcript, v1_memo)

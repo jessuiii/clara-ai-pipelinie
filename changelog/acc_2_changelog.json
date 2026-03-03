@@ -1,34 +1,46 @@
 {
   "account_id": "acc_2",
-  "changelog_generated_at": "2026-03-03T12:53:50.758162Z",
+  "changelog_generated_at": "2026-03-03T13:43:04.559089Z",
   "from_version": "v1",
   "to_version": "v2",
   "source_file": "sample_transcripts\\onboarding_2.txt",
-  "summary": "3 field(s) updated during onboarding",
+  "summary": "4 field(s) updated during onboarding",
   "changes": [
+    {
+      "field": "after_hours_flow_summary",
+      "old": "call on-call manager Tom Briggs or answering service for emergencies",
+      "new": "call on-call manager Rachel Kim or answering service for emergencies",
+      "change_type": "value_updated"
+    },
     {
       "field": "emergency_definition",
       "old": [
-        "No Heat",
-        "Alarm"
+        "no heat in winter",
+        "no AC when over 95 degrees",
+        "commercial refrigeration failure",
+        "carbon monoxide alarm",
+        "complete system failure at a business"
       ],
       "new": [
-        "No Heat",
-        "Alarm",
-        "Smoke"
+        "no heat in winter",
+        "no AC when over 95 degrees",
+        "commercial refrigeration failure",
+        "carbon monoxide alarm",
+        "complete system failure at a business",
+        "smoke alarm or unusual burning smell from HVAC equipment"
       ],
       "change_type": "list_updated"
     },
     {
-      "field": "notes",
-      "old": "Extracted via rule-based fallback.",
-      "new": "Updated via rule-based onboarding extraction.",
+      "field": "emergency_routing_rules.primary_contact",
+      "old": "Tom Briggs 720-555-0341",
+      "new": "Rachel Kim 720-555-0500",
       "change_type": "value_updated"
     },
     {
       "field": "office_address",
-      "old": "890 Commerce Street,",
-      "new": "1201 Wynkoop Street,",
+      "old": "890 Commerce Street, Denver CO 80203",
+      "new": "1201 Wynkoop Street, Denver CO 80202",
       "change_type": "value_updated"
     }
   ]
