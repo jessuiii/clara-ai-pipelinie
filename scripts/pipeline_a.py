@@ -17,25 +17,42 @@ from pathlib import Path
 OUTPUTS_DIR = Path(__file__).parent.parent / "outputs" / "accounts"
 CHANGELOG_DIR = Path(__file__).parent.parent / "changelog"
 
-# ── LLM Client (zero-cost: uses Anthropic free-tier API key from env) ─────────
+# ── LLM Client (zero-cost: uses Groq free API) ───────────────────────────────
 def call_llm(prompt: str) -> str:
-    """Call Claude API. Set ANTHROPIC_API_KEY in env (free tier)."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    """Call Groq API. Set GROQ_API_KEY in env (completely free)."""
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        print("[WARN] ANTHROPIC_API_KEY not set — using rule-based fallback extraction.")
+        print("[WARN] GROQ_API_KEY not set — using rule-based fallback extraction.")
         return ""
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",  # cheapest / free-tier friendly
-            max_tokens=2048,
-            messages=[{"role": "user", "content": prompt}]
+        import urllib.request
+        import json as _json
+        data = _json.dumps({
+            "model": "moonshotai/kimi-k2-instruct",
+            "messages": [{"role": "user", "content": prompt}],
+            "max_tokens": 2048,
+            "temperature": 0.1
+        }).encode("utf-8")
+        req = urllib.request.Request(
+            "https://api.groq.com/openai/v1/chat/completions",
+            data=data,
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
         )
-        return message.content[0].text
+        with urllib.request.urlopen(req) as resp:
+            result = _json.loads(resp.read().decode("utf-8"))
+            return result["choices"][0]["message"]["content"]
     except Exception as e:
-        print(f"[WARN] LLM call failed: {e}. Falling back to rule-based extraction.")
+        import urllib.error
+        if isinstance(e, urllib.error.HTTPError):
+            print(f"[WARN] Groq call failed: {e}. Body: {e.read().decode()}")
+        else:
+            print(f"[WARN] Groq call failed: {e}.")
+        print("Falling back to rule-based extraction.")
         return ""
 
 # ── Rule-based extraction helpers ─────────────────────────────────────────────
