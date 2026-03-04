@@ -1,9 +1,9 @@
 {
   "account_id": "acc_1",
-  "changelog_generated_at": "2026-03-03T16:36:03.869146Z",
+  "changelog_generated_at": "2026-03-04T23:01:40.513334Z",
   "from_version": "v1",
   "to_version": "v2",
-  "source_file": "sample_transcripts/onboarding_1.txt",
+  "source_file": "sample_transcripts\\onboarding_1.txt",
   "summary": "5 field(s) updated during onboarding",
   "changes": [
     {

@@ -234,7 +234,7 @@ def build_account_memo(transcript, account_id, version="v1", source_file=""):
         print("  → Using rule-based extraction")
         extracted = extract_from_transcript_rules(transcript)
     else:
-        print("  → AI extraction successful (Groq/Kimi)")
+        print("  → AI extraction successful (Groq)")
     return {"account_id": account_id, "version": version, "created_at": datetime.now().isoformat() + "Z", "source_file": source_file, **extracted}
 
 SYSTEM_PROMPT_TEMPLATE = """You are {agent_name}, a professional AI receptionist for {company_name}.

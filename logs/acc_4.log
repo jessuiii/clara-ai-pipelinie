@@ -20,3 +20,27 @@
 2026-03-03 16:36:07,115 [INFO] v2 memo + spec saved to outputs/accounts/acc_4/v2/
 2026-03-03 16:36:07,116 [INFO] Changelog saved to changelog/acc_4_changelog.json
 2026-03-03 16:36:07,117 [INFO] === Pipeline B complete ===
+2026-03-05 04:31:41,789 [INFO] === Pipeline A started ===
+2026-03-05 04:31:41,790 [INFO] Transcript: sample_transcripts\demo_4.txt (1237 chars)
+2026-03-05 04:31:41,790 [INFO] Account ID: acc_4
+2026-03-05 04:31:41,793 [INFO] Extraction method: rule-based
+2026-03-05 04:31:41,793 [INFO] Company name extracted: Unknown Company
+2026-03-05 04:31:41,793 [INFO] Services: ['Pest Control']
+2026-03-05 04:31:41,793 [INFO] Business hours: {'days': ['Mon', 'Sat', 'Sun'], 'start': '7am', 'end': '6pm', 'timezone': 'Mountain'}
+2026-03-05 04:31:41,793 [INFO] Questions/unknowns: ['Office address not mentioned — confirm during onboarding.']
+2026-03-05 04:31:41,804 [INFO] v1 memo saved to outputs/accounts/acc_4/v1/account_memo.json
+2026-03-05 04:31:41,804 [INFO] v1 spec saved to outputs/accounts/acc_4/v1/agent_spec.json
+2026-03-05 04:31:41,804 [INFO] Task tracker item created: tasks/acc_4.json
+2026-03-05 04:31:41,804 [INFO] Open questions: ['Office address not mentioned — confirm during onboarding.']
+2026-03-05 04:31:41,804 [INFO] === Pipeline A complete ===
+2026-03-05 04:31:42,308 [INFO] === Pipeline B started ===
+2026-03-05 04:31:42,308 [INFO] Onboarding transcript: sample_transcripts\onboarding_4.txt
+2026-03-05 04:31:42,333 [INFO] v1 memo loaded successfully
+2026-03-05 04:31:42,359 [INFO] Onboarding transcript loaded (577 chars)
+2026-03-05 04:31:42,359 [INFO] v1 memo is empty/rule-based — running full LLM extraction
+2026-03-05 04:31:42,361 [INFO] LLM returned no updates — falling back to rule-based extraction
+2026-03-05 04:31:42,362 [INFO] Updates extracted: ['business_hours', 'services_supported', 'notes']
+2026-03-05 04:31:42,363 [INFO] 5 field(s) changed: ['business_hours.days', 'business_hours.end', 'business_hours.start', 'notes', 'services_supported']
+2026-03-05 04:31:42,375 [INFO] v2 memo + spec saved to outputs/accounts/acc_4/v2/
+2026-03-05 04:31:42,375 [INFO] Changelog saved to changelog/acc_4_changelog.json
+2026-03-05 04:31:42,375 [INFO] === Pipeline B complete ===

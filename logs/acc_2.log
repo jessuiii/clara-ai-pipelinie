@@ -20,3 +20,27 @@
 2026-03-03 16:36:04,987 [INFO] v2 memo + spec saved to outputs/accounts/acc_2/v2/
 2026-03-03 16:36:04,990 [INFO] Changelog saved to changelog/acc_2_changelog.json
 2026-03-03 16:36:04,991 [INFO] === Pipeline B complete ===
+2026-03-05 04:31:40,559 [INFO] === Pipeline A started ===
+2026-03-05 04:31:40,560 [INFO] Transcript: sample_transcripts\demo_2.txt (1332 chars)
+2026-03-05 04:31:40,560 [INFO] Account ID: acc_2
+2026-03-05 04:31:40,564 [INFO] Extraction method: rule-based
+2026-03-05 04:31:40,565 [INFO] Company name extracted: Unknown Company
+2026-03-05 04:31:40,565 [INFO] Services: ['Hvac', 'Refrigeration']
+2026-03-05 04:31:40,565 [INFO] Business hours: {'days': ['Mon', 'Fri'], 'start': '8am', 'end': '5pm', 'timezone': 'Mountain'}
+2026-03-05 04:31:40,565 [INFO] Questions/unknowns: []
+2026-03-05 04:31:40,580 [INFO] v1 memo saved to outputs/accounts/acc_2/v1/account_memo.json
+2026-03-05 04:31:40,580 [INFO] v1 spec saved to outputs/accounts/acc_2/v1/agent_spec.json
+2026-03-05 04:31:40,581 [INFO] Task tracker item created: tasks/acc_2.json
+2026-03-05 04:31:40,581 [INFO] Open questions: []
+2026-03-05 04:31:40,581 [INFO] === Pipeline A complete ===
+2026-03-05 04:31:41,083 [INFO] === Pipeline B started ===
+2026-03-05 04:31:41,084 [INFO] Onboarding transcript: sample_transcripts\onboarding_2.txt
+2026-03-05 04:31:41,106 [INFO] v1 memo loaded successfully
+2026-03-05 04:31:41,129 [INFO] Onboarding transcript loaded (581 chars)
+2026-03-05 04:31:41,130 [INFO] v1 memo is empty/rule-based — running full LLM extraction
+2026-03-05 04:31:41,131 [INFO] LLM returned no updates — falling back to rule-based extraction
+2026-03-05 04:31:41,133 [INFO] Updates extracted: ['office_address', 'emergency_definition', 'notes']
+2026-03-05 04:31:41,133 [INFO] 3 field(s) changed: ['emergency_definition', 'notes', 'office_address']
+2026-03-05 04:31:41,143 [INFO] v2 memo + spec saved to outputs/accounts/acc_2/v2/
+2026-03-05 04:31:41,144 [INFO] Changelog saved to changelog/acc_2_changelog.json
+2026-03-05 04:31:41,144 [INFO] === Pipeline B complete ===
