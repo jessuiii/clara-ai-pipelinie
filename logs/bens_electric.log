@@ -1,68 +1,22 @@
-2026-03-14 23:14:42,234 [INFO] === Pipeline A started ===
-2026-03-14 23:14:42,234 [INFO] Transcript: sample_transcripts/demo_bens_electric.txt (107573 chars)
-2026-03-14 23:14:42,234 [INFO] Account ID: bens_electric
-2026-03-14 23:14:42,286 [INFO] Extraction method: AI (Groq)
-2026-03-14 23:14:42,286 [INFO] Company name extracted: Nick and a few other folks
-2026-03-14 23:14:42,286 [INFO] Services: ['Electrical', 'Plumbing', 'Generator']
-2026-03-14 23:14:42,286 [INFO] Business hours: {'days': ['Thu', 'Fri'], 'start': '', 'end': '', 'timezone': ''}
-2026-03-14 23:14:42,287 [INFO] Questions/unknowns: ['Business hours (start/end time) not confirmed — to be finalized during onboarding.', 'Timezone not explicitly stated — confirm during onboarding.']
-2026-03-14 23:14:42,307 [INFO] v1 memo saved to outputs/accounts/bens_electric/v1/account_memo.json
-2026-03-14 23:14:42,307 [INFO] v1 spec saved to outputs/accounts/bens_electric/v1/agent_spec.json
-2026-03-14 23:14:42,307 [INFO] Task tracker item created: tasks/bens_electric.json
-2026-03-14 23:14:42,307 [INFO] Open questions: ['Business hours (start/end time) not confirmed — to be finalized during onboarding.', 'Timezone not explicitly stated — confirm during onboarding.']
-2026-03-14 23:14:42,307 [INFO] === Pipeline A complete ===
-2026-03-14 23:14:42,530 [INFO] === Pipeline B started ===
-2026-03-14 23:14:42,531 [INFO] Onboarding transcript: sample_transcripts/onboarding_bens_electric.txt
-2026-03-14 23:14:42,553 [INFO] v1 memo loaded successfully
-2026-03-14 23:14:42,554 [INFO] Onboarding transcript loaded (20831 chars)
-2026-03-14 23:14:42,555 [INFO] LLM returned no updates — falling back to rule-based extraction
-2026-03-14 23:14:42,570 [INFO] Updates extracted: ['office_address', 'services_supported', 'notes']
-2026-03-14 23:14:42,581 [INFO] 3 field(s) changed: ['notes', 'office_address', 'services_supported']
-2026-03-14 23:14:42,589 [INFO] v2 memo + spec saved to outputs/accounts/bens_electric/v2/
-2026-03-14 23:14:42,590 [INFO] Changelog saved to changelog/bens_electric_changelog.json
-2026-03-14 23:14:42,590 [INFO] === Pipeline B complete ===
-2026-03-14 23:15:30,576 [INFO] === Pipeline A started ===
-2026-03-14 23:15:30,576 [INFO] Transcript: sample_transcripts/demo_bens_electric.txt (107573 chars)
-2026-03-14 23:15:30,576 [INFO] Account ID: bens_electric
-2026-03-14 23:15:30,621 [INFO] Extraction method: AI (Groq)
-2026-03-14 23:15:30,621 [INFO] Company name extracted: Nick and a few other folks
-2026-03-14 23:15:30,621 [INFO] Services: ['Plumbing', 'Generator', 'Electrical']
-2026-03-14 23:15:30,621 [INFO] Business hours: {'days': ['Thu', 'Fri'], 'start': '', 'end': '', 'timezone': ''}
-2026-03-14 23:15:30,621 [INFO] Questions/unknowns: ['Business hours (start/end time) not confirmed — to be finalized during onboarding.', 'Timezone not explicitly stated — confirm during onboarding.']
-2026-03-14 23:15:30,636 [INFO] v1 memo saved to outputs/accounts/bens_electric/v1/account_memo.json
-2026-03-14 23:15:30,637 [INFO] v1 spec saved to outputs/accounts/bens_electric/v1/agent_spec.json
-2026-03-14 23:15:30,637 [INFO] Task tracker item created: tasks/bens_electric.json
-2026-03-14 23:15:30,637 [INFO] Open questions: ['Business hours (start/end time) not confirmed — to be finalized during onboarding.', 'Timezone not explicitly stated — confirm during onboarding.']
-2026-03-14 23:15:30,637 [INFO] === Pipeline A complete ===
-2026-03-14 23:15:30,865 [INFO] === Pipeline B started ===
-2026-03-14 23:15:30,865 [INFO] Onboarding transcript: sample_transcripts/onboarding_bens_electric.txt
-2026-03-14 23:15:30,885 [INFO] v1 memo loaded successfully
-2026-03-14 23:15:30,885 [INFO] Onboarding transcript loaded (20831 chars)
-2026-03-14 23:15:30,886 [INFO] LLM returned no updates — falling back to rule-based extraction
-2026-03-14 23:15:30,898 [INFO] Updates extracted: ['office_address', 'services_supported', 'notes']
-2026-03-14 23:15:30,907 [INFO] 3 field(s) changed: ['notes', 'office_address', 'services_supported']
-2026-03-14 23:15:30,917 [INFO] v2 memo + spec saved to outputs/accounts/bens_electric/v2/
-2026-03-14 23:15:30,919 [INFO] Changelog saved to changelog/bens_electric_changelog.json
-2026-03-14 23:15:30,919 [INFO] === Pipeline B complete ===
-2026-03-14 23:21:22,350 [INFO] === Pipeline A started ===
-2026-03-14 23:21:22,351 [INFO] Transcript: sample_transcripts/demo_bens_electric.txt (107573 chars)
-2026-03-14 23:21:22,351 [INFO] Account ID: bens_electric
-2026-03-14 23:21:24,724 [INFO] Extraction method: AI (Groq)
-2026-03-14 23:21:24,724 [INFO] Company name extracted: Bens electrical solutions
-2026-03-14 23:21:24,725 [INFO] Services: ['service calls', 'small jobs', 'odd jobs', 'renovations', 'troubleshooting', 'EV chargers', 'hot tub hookups', 'panel changes']
-2026-03-14 23:21:24,725 [INFO] Business hours: {'days': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], 'start': None, 'end': None, 'timezone': None}
-2026-03-14 23:21:24,725 [INFO] Questions/unknowns: ['business hours', 'office address', 'call transfer rules']
-2026-03-14 23:21:24,737 [INFO] v1 memo saved to outputs/accounts/bens_electric/v1/account_memo.json
-2026-03-14 23:21:24,738 [INFO] v1 spec saved to outputs/accounts/bens_electric/v1/agent_spec.json
-2026-03-14 23:21:24,738 [INFO] Task tracker item created: tasks/bens_electric.json
-2026-03-14 23:21:24,738 [INFO] Open questions: ['business hours', 'office address', 'call transfer rules']
-2026-03-14 23:21:24,738 [INFO] === Pipeline A complete ===
-2026-03-14 23:21:24,957 [INFO] === Pipeline B started ===
-2026-03-14 23:21:24,958 [INFO] Onboarding transcript: sample_transcripts/onboarding_bens_electric.txt
-2026-03-14 23:21:24,981 [INFO] v1 memo loaded successfully
-2026-03-14 23:21:24,982 [INFO] Onboarding transcript loaded (20831 chars)
-2026-03-14 23:21:26,642 [INFO] Updates extracted: ['business_hours', 'emergency_definition', 'emergency_routing_rules', 'non_emergency_routing_rules', 'call_transfer_rules', 'integration_constraints', 'after_hours_flow_summary', 'office_hours_flow_summary', 'questions_or_unknowns', 'notes']
-2026-03-14 23:21:26,652 [INFO] 6 field(s) changed: ['after_hours_flow_summary', 'business_hours.end', 'business_hours.start', 'emergency_definition', 'emergency_routing_rules.fallback', 'notes']
-2026-03-14 23:21:26,658 [INFO] v2 memo + spec saved to outputs/accounts/bens_electric/v2/
-2026-03-14 23:21:26,658 [INFO] Changelog saved to changelog/bens_electric_changelog.json
-2026-03-14 23:21:26,658 [INFO] === Pipeline B complete ===
+2026-03-15 00:06:15,902 [INFO] === Pipeline A started ===
+2026-03-15 00:06:15,903 [INFO] Transcript: sample_transcripts/demo_bens_electric.txt (107573 chars)
+2026-03-15 00:06:15,903 [INFO] Account ID: bens_electric
+2026-03-15 00:06:17,612 [INFO] Extraction method: AI (Groq)
+2026-03-15 00:06:17,612 [INFO] Company name extracted: Bens electrical solutions
+2026-03-15 00:06:17,612 [INFO] Services: ['service calls', 'small jobs', 'odd jobs', 'renovations', 'troubleshooting', 'EV chargers', 'hot tub hookups', 'panel changes']
+2026-03-15 00:06:17,612 [INFO] Business hours: {'days': ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], 'start': None, 'end': None, 'timezone': None}
+2026-03-15 00:06:17,614 [INFO] Questions/unknowns: ['business hours', 'office address', 'call transfer rules']
+2026-03-15 00:06:17,637 [INFO] v1 memo saved to outputs/accounts/bens_electric/v1/account_memo.json
+2026-03-15 00:06:17,638 [INFO] v1 spec saved to outputs/accounts/bens_electric/v1/agent_spec.json
+2026-03-15 00:06:17,638 [INFO] Task tracker item created: tasks/bens_electric.json
+2026-03-15 00:06:17,638 [INFO] Open questions: ['business hours', 'office address', 'call transfer rules']
+2026-03-15 00:06:17,638 [INFO] === Pipeline A complete ===
+2026-03-15 00:06:17,874 [INFO] === Pipeline B started ===
+2026-03-15 00:06:17,874 [INFO] Onboarding transcript: sample_transcripts/onboarding_bens_electric.txt
+2026-03-15 00:06:17,895 [INFO] v1 memo loaded successfully
+2026-03-15 00:06:17,896 [INFO] Onboarding transcript loaded (20831 chars)
+2026-03-15 00:06:19,606 [INFO] Updates extracted: ['business_hours', 'emergency_definition', 'emergency_routing_rules', 'non_emergency_routing_rules', 'call_transfer_rules', 'integration_constraints', 'after_hours_flow_summary', 'office_hours_flow_summary', 'questions_or_unknowns', 'notes']
+2026-03-15 00:06:19,622 [INFO] 6 field(s) changed: ['after_hours_flow_summary', 'business_hours.end', 'business_hours.start', 'emergency_definition', 'emergency_routing_rules.fallback', 'notes']
+2026-03-15 00:06:19,631 [INFO] v2 memo + spec saved to outputs/accounts/bens_electric/v2/
+2026-03-15 00:06:19,631 [INFO] Changelog saved to changelog/bens_electric_changelog.json
+2026-03-15 00:06:19,632 [INFO] === Pipeline B complete ===
