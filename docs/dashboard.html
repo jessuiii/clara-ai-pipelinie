@@ -847,103 +847,72 @@
   </div>
 
   <script>
-    // ── Data layer — reads from embedded JSON outputs ─────────────────────────────
-    // In production, these would be fetched from the server.
-    // For the static demo, we embed the account data inline.
+    // ── Data layer — dynamically fetched from outputs/ JSON files ────────────────
+    // Reads accounts_index.json to discover accounts, then fetches each account's
+    // real v1/v2 memos and changelog from the outputs/ directory.
+    // Re-run the pipelines and refresh the browser — data is always live.
 
     const ACCOUNTS_DATA = {};
 
-    // Embed actual output data
-    const SAMPLE_ACCOUNTS = [
-      {
-        id: "bens_electric",
-        v1: {
-          account_id: "bens_electric",
-          version: "v1",
-          created_at: "2026-03-03T21:37:30.135989Z",
-          source_file: "sample_transcripts/demo_bens_electric.txt",
-          company_name: "Ben's Electrical Solutions",
-          business_hours: {
-            days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-            start: null, end: null, timezone: null
-          },
-          office_address: null,
-          services_supported: [
-            "service calls", "small jobs", "odd jobs", "renovations",
-            "troubleshooting", "EV chargers", "hot tub hookups", "panel changes"
-          ],
-          emergency_definition: [
-            "emergency calls from regular property managers and general contractors"
-          ],
-          emergency_routing_rules: {
-            primary_contact: "Ben",
-            secondary_contact: null,
-            fallback: "defer to another service"
-          },
-          non_emergency_routing_rules: { action: null, destination: null },
-          call_transfer_rules: { timeout_seconds: null, retries: null, if_transfer_fails: null },
-          integration_constraints: ["don't use virtual receptionists"],
-          after_hours_flow_summary: "Ben is on call and may answer or defer to another service",
-          office_hours_flow_summary: "Ben manages operations and answers calls",
-          questions_or_unknowns: [
-            "What is the exact business hours and timezone?",
-            "What is the office address?"
-          ],
-          notes: "Ben has 30 years of experience as an electrician and has been running his own business for 8 years. He has a team of 3 full-time electricians and 1 apprentice, and uses Jobber as his CRM."
-        },
-        v2: {
-          account_id: "bens_electric",
-          version: "v2",
-          created_at: "2026-03-03T21:37:30.135989Z",
-          updated_at: "2026-03-03T16:07:32.433893Z",
-          company_name: "Ben's Electrical Solutions",
-          business_hours: {
-            days: ["Mon", "Tue", "Wed", "Thu", "Fri"],
-            start: "8:00", end: "4:30", timezone: null
-          },
-          office_address: null,
-          services_supported: [
-            "service calls", "small jobs", "odd jobs", "renovations",
-            "troubleshooting", "EV chargers", "hot tub hookups", "panel changes"
-          ],
-          emergency_definition: [
-            "emergency calls from regular property managers and general contractors",
-            "emergency calls from G and M pressure washing (for properties they manage, e.g. Chevron gas stations)"
-          ],
-          emergency_routing_rules: {
-            primary_contact: "Ben",
-            secondary_contact: null,
-            fallback: "patch through to Ben if caller is from G and M pressure washing"
-          },
-          non_emergency_routing_rules: { action: "take message or answer", destination: "Ben or another team member" },
-          call_transfer_rules: { timeout_seconds: null, retries: null, if_transfer_fails: null },
-          integration_constraints: ["don't use virtual receptionists"],
-          after_hours_flow_summary: "Clara answers, patches through to Ben if caller is from G and M pressure washing",
-          office_hours_flow_summary: "Ben manages operations and answers calls, Clara answers and transfers to Ben if necessary",
-          questions_or_unknowns: [
-            "What is the exact business hours and timezone?",
-            "What is the office address?",
-            "What is the exact timezone?"
-          ],
-          notes: "Ben has a service call fee of $115, and an hourly charge of $98. Ben wants Clara to mention the service call fee if the caller inquires about it."
-        },
-        changelog: [
-          { field: "after_hours_flow_summary", old: "Ben is on call and may answer or defer to another service", new: "Clara answers, patches through to Ben if caller is from G and M pressure washing", change_type: "value_updated" },
-          { field: "business_hours.end", old: null, new: "4:30", change_type: "added" },
-          { field: "business_hours.start", old: null, new: "8:00", change_type: "added" },
-          { field: "emergency_definition", old: ["emergency calls from regular property managers and general contractors"], new: ["emergency calls from regular property managers and general contractors", "emergency calls from G and M pressure washing (for properties they manage, e.g. Chevron gas stations)"], change_type: "list_updated" },
-          { field: "emergency_routing_rules.fallback", old: "defer to another service", new: "patch through to Ben if caller is from G and M pressure washing", change_type: "value_updated" },
-          { field: "notes", old: "Ben has 30 years of experience as an electrician and has been running his own business for 8 years. He has a team of 3 full-time electricians and 1 apprentice, and uses Jobber as his CRM.", new: "Ben has a service call fee of $115, and an hourly charge of $98. Ben wants Clara to mention the service call fee if the caller inquires about it.", change_type: "value_updated" },
-          { field: "office_hours_flow_summary", old: "Ben manages operations and answers calls", new: "Ben manages operations and answers calls, Clara answers and transfers to Ben if necessary", change_type: "value_updated" },
-          { field: "questions_or_unknowns", old: ["What is the exact business hours and timezone?", "What is the office address?"], new: ["What is the exact business hours and timezone?", "What is the office address?", "What is the exact timezone?"], change_type: "list_updated" }
-        ]
+    async function loadAllAccounts() {
+      let accountIds = [];
+
+      // Try batch_summary.json first (written by run_batch.py)
+      try {
+        const summary = await fetch('../outputs/batch_summary.json').then(r => r.ok ? r.json() : null);
+        if (summary && summary.results) {
+          // Strip any acc_ prefix — batch_summary uses acc_bens_electric but folders use bens_electric
+          accountIds = summary.results.map(r => r.account_id.replace(/^acc_/, ''));
+          const elapsed = summary.duration_seconds;
+          document.getElementById('stat-time').textContent = elapsed ? elapsed.toFixed(1) : '—';
+          document.getElementById('last-run').textContent = `Last run: ${new Date(summary.run_at).toLocaleString()}`;
+        }
+      } catch(e) {}
+
+      // Fallback: try accounts_index.json (written by generate_index.py)
+      if (!accountIds.length) {
+        try {
+          accountIds = await fetch('../outputs/accounts_index.json').then(r => r.ok ? r.json() : []);
+        } catch(e) {}
       }
-    ];
 
+      // Last resort: try fetching bens_electric directly if nothing else works
+      if (!accountIds.length) {
+        accountIds = ['bens_electric'];
+        document.getElementById('last-run').textContent = 'Run pipeline to populate dashboard';
+      }
 
+      // Fetch each account's files in parallel
+      await Promise.all(accountIds.map(id => loadAccount(id)));
 
-    // Load data into lookup
-    SAMPLE_ACCOUNTS.forEach(a => { ACCOUNTS_DATA[a.id] = a; });
+      renderAccounts();
+      populateSelectors();
+    }
+
+    async function loadAccount(id) {
+      const base = `../outputs/accounts/${id}`;
+      const clBase = `../changelog`;
+
+      const [v1, v2, changelog] = await Promise.all([
+        fetch(`${base}/v1/account_memo.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${base}/v2/account_memo.json`).then(r => r.ok ? r.json() : null).catch(() => null),
+        fetch(`${clBase}/${id}_changelog.json`).then(r => r.ok ? r.json() : null).catch(() => null)
+      ]);
+
+      if (!v1) return; // skip if no data at all
+
+      ACCOUNTS_DATA[id] = {
+        id,
+        v1,
+        v2: v2 || null,
+        changelog: changelog ? changelog.changes : []
+      };
+    }
+
+    // REMOVED: hardcoded SAMPLE_ACCOUNTS block
+    // Data is now fetched live from outputs/ on page load.
+
+    // (data is loaded dynamically by loadAllAccounts — no hardcoded data here)
 
     // ── UI State ──────────────────────────────────────────────────────────────────
     function switchTab(name, el) {
@@ -1219,20 +1188,25 @@ ${(memo.emergency_definition || []).map(e => `- ${e}`).join('\n')}
     <div class="prompt-viewer">${highlighted}</div>`;
     }
 
-    function loadRaw() {
+    async function loadRaw() {
       const id = document.getElementById('raw-account-select').value;
       const ver = document.getElementById('raw-version-select').value;
       const file = document.getElementById('raw-file-select').value;
       if (!id) return;
 
-      const acc = ACCOUNTS_DATA[id];
-      const data = ver === 'v2' ? acc.v2 : acc.v1;
-      if (!data) {
-        document.getElementById('raw-json-viewer').textContent = `No ${ver} data for ${id}`;
-        return;
+      const filename = file === 'spec' ? 'agent_spec.json' : 'account_memo.json';
+      const url = `../outputs/accounts/${id}/${ver}/${filename}`;
+      const viewer = document.getElementById('raw-json-viewer');
+      viewer.textContent = 'Loading...';
+
+      try {
+        const resp = await fetch(url);
+        if (!resp.ok) { viewer.textContent = `No ${ver}/${filename} found for ${id}`; return; }
+        const data = await resp.json();
+        viewer.innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+      } catch(e) {
+        viewer.textContent = `Error loading file: ${e.message}`;
       }
-      const json = JSON.stringify(data, null, 2);
-      document.getElementById('raw-json-viewer').innerHTML = syntaxHighlight(json);
     }
 
     function syntaxHighlight(json) {
@@ -1253,8 +1227,8 @@ ${(memo.emergency_definition || []).map(e => `- ${e}`).join('\n')}
     });
 
     // ── Init ──────────────────────────────────────────────────────────────────────
-    renderAccounts();
-    populateSelectors();
+    // Dynamically load all accounts from output files, then render
+    loadAllAccounts();
   </script>
 </body>
 
