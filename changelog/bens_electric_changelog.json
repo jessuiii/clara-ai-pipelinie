@@ -1,0 +1,51 @@
+{
+  "account_id": "bens_electric",
+  "changelog_generated_at": "2026-03-14T17:51:26.653010Z",
+  "from_version": "v1",
+  "to_version": "v2",
+  "source_file": "sample_transcripts/onboarding_bens_electric.txt",
+  "summary": "6 field(s) updated during onboarding",
+  "changes": [
+    {
+      "field": "after_hours_flow_summary",
+      "old": "Ben is on call and may defer non-emergency calls to elsewhere",
+      "new": "Ben is on call for emergencies from GnM pressure washing, and may defer non-emergency calls",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "business_hours.end",
+      "old": null,
+      "new": "4:30",
+      "change_type": "added"
+    },
+    {
+      "field": "business_hours.start",
+      "old": null,
+      "new": "8:00",
+      "change_type": "added"
+    },
+    {
+      "field": "emergency_definition",
+      "old": [
+        "emergency calls from regular property managers and general contractors"
+      ],
+      "new": [
+        "emergency calls from regular property managers and general contractors",
+        "emergency calls from GnM pressure washing (property manager for Chevron and SOS gas stations)"
+      ],
+      "change_type": "list_updated"
+    },
+    {
+      "field": "emergency_routing_rules.fallback",
+      "old": "defer to elsewhere",
+      "new": "patch through to Ben",
+      "change_type": "value_updated"
+    },
+    {
+      "field": "notes",
+      "old": "Ben has 30 years of experience as an electrician and has a team of 3 full-time journeymen and 1 apprentice, with 2 subcontractors",
+      "new": "Ben has a service call fee of $115, and an hourly charge of $98",
+      "change_type": "value_updated"
+    }
+  ]
+}

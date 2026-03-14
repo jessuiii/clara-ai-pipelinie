@@ -1,0 +1,4 @@
+# Clara AI Pipeline — Python dependencies
+# The pipeline uses only Python standard library modules (urllib, json, re, logging, pathlib).
+# No third-party packages are required.
+# If you want to add optional extras, list them below.

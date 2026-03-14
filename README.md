@@ -1,192 +1,186 @@
 # Clara AI — Automation Pipeline
 
-**Demo Call → Retell Agent Draft → Onboarding Updates → Agent Revision**
+**Demo Call → Preliminary Retell Agent → Onboarding Updates → Agent Revision**
 
-Zero-cost, locally-runnable pipeline that processes call transcripts and generates versioned Retell AI agent configurations.
-
----
-
-## Architecture
-
-```
-demo_transcript.txt
-        │
-        ▼
-  [ Pipeline A ]
-  ├── Extract account memo (LLM or rule-based)
-  ├── Generate Retell Agent Spec v1
-  └── outputs/accounts/<id>/v1/
-             account_memo.json
-             agent_spec.json
-        │
-        ▼
-onboarding_transcript.txt
-        │
-        ▼
-  [ Pipeline B ]
-  ├── Extract updates from onboarding
-  ├── Merge v1 → v2 (deep patch)
-  ├── Generate diff + changelog
-  ├── Generate Retell Agent Spec v2
-  └── outputs/accounts/<id>/v2/
-             account_memo.json
-             agent_spec.json
-  changelog/
-    <id>_changelog.json
-    <id>_changes.md
-```
-
-**LLM Strategy (Zero-Cost):**
-- If `ANTHROPIC_API_KEY` is set: uses `claude-haiku-4-5` (cheapest model, ~$0.001/call, or use free credits)
-- If no API key: falls back to rule-based regex extraction automatically
-- Both paths produce identical output schemas
+Zero-cost, locally-runnable pipeline that converts unstructured call transcripts into structured, versioned Retell AI agent configurations — automatically.
 
 ---
 
-## Quick Start
+## 🏗️ Architecture and Data Flow
 
-### 1. Prerequisites
+```mermaid
+flowchart TD
 
-```bash
-python3 --version   # 3.9+
-pip install anthropic  # optional — only for LLM extraction
+    A[Demo Call Transcript] --> B[Pipeline A]
+
+    subgraph Pipeline A
+        B1[Normalize + Assign Account ID]
+        B2[LLM Extraction / Rule Fallback]
+        B3[Generate Account Memo v1]
+        B4[Generate Retell Agent Spec v1]
+        B5[Save outputs/accounts/<id>]
+        B6[Create Task Tracker Item]
+    end
+
+    B --> B1 --> B2 --> B3 --> B4 --> B5 --> B6
+
+    B6 --> C[Onboarding Call Transcript]
+
+    C --> D[Pipeline B]
+
+    subgraph Pipeline B
+        D1[Load Memo v1]
+        D2[Extract Updates]
+        D3[Deep Merge v1 → v2]
+        D4[Generate Account Memo v2]
+        D5[Generate Retell Agent Spec v2]
+        D6[Generate Changelog]
+        D7[Save Updated Files]
+    end
+
+    D --> D1 --> D2 --> D3 --> D4 --> D5 --> D6 --> D7
+
+    D7 --> E[Static Dashboard UI]
 ```
 
-### 2. Clone and set up
+### LLM Strategy (Zero-Cost)
+| Mode | When | How |
+|---|---|---|
+| AI (Groq) | `GROQ_API_KEY` is set | `moonshotai/kimi-k2-instruct` via Groq free tier |
+| Rule-based | No API key / API fails | Regex pattern library (offline, no dependencies) |
 
+Both modes produce **identical JSON schemas**. The pipeline never crashes — it always falls back cleanly.
+
+---
+
+## ⚡ Quick Start
+
+### Prerequisites
 ```bash
-git clone <your-repo-url>
+python3 --version   # 3.9+ required, no pip packages needed
+```
+
+### 1. Clone and setup
+```bash
+git clone https://github.com/jessuiii/clara-ai-pipelinie.git
 cd clara-ai-pipeline
 ```
 
-### 3. (Optional) Set API key for LLM extraction
-
+### 2. Set Groq API key (highly recommended)
 ```bash
-export ANTHROPIC_API_KEY=sk-ant-...   # free tier works
+# Get a free key at console.groq.com — no credit card required
+export GROQ_API_KEY=gsk_...        # Mac/Linux
+$env:GROQ_API_KEY="gsk_..."        # Windows PowerShell
 ```
 
-Without this, rule-based extraction runs automatically. No cost either way.
-
-### 4. Run Pipeline A (demo call → v1 agent)
-
+### 3. Run Pipeline A — Demo → v1 Agent
 ```bash
-python scripts/pipeline_a.py sample_transcripts/demo_1.txt acc_1
+python scripts/pipeline_a.py sample_transcripts/demo_bens_electric.txt bens_electric
 ```
+**Creates:**
+- `outputs/accounts/bens_electric/v1/account_memo.json`
+- `outputs/accounts/bens_electric/v1/agent_spec.json`
+- `tasks/bens_electric.json` ← task tracker item
 
-**Output:**
-```
-outputs/accounts/acc_1/v1/account_memo.json
-outputs/accounts/acc_1/v1/agent_spec.json
-```
-
-### 5. Run Pipeline B (onboarding → v2 agent)
-
+### 4. Run Pipeline B — Onboarding → v2 Agent
 ```bash
-python scripts/pipeline_b.py sample_transcripts/onboarding_1.txt acc_1
+python scripts/pipeline_b.py sample_transcripts/onboarding_bens_electric.txt bens_electric
 ```
+**Creates:**
+- `outputs/accounts/bens_electric/v2/account_memo.json`
+- `outputs/accounts/bens_electric/v2/agent_spec.json`
+- `changelog/bens_electric_changelog.json`
+- `changelog/bens_electric_changes.md`
 
-**Output:**
-```
-outputs/accounts/acc_1/v2/account_memo.json
-outputs/accounts/acc_1/v2/agent_spec.json
-changelog/acc_1_changelog.json
-changelog/acc_1_changes.md
-```
-
-### 6. Run Full Batch (all 10 files)
-
+### 5. Run the full batch (all 5 demo + 5 onboarding pairs)
 ```bash
-python scripts/run_batch.py --dataset-dir ./sample_transcripts
+python scripts/run_batch.py
 ```
 
-This auto-pairs `demo_N.txt` with `onboarding_N.txt` files and runs both pipelines.
+### 6. View the dashboard
+Open `docs/dashboard.html` in any browser — no server required.
 
 ---
 
-## Plug In Your Dataset
-
-Naming convention for auto-pairing:
-```
-sample_transcripts/
-  demo_acmeplumbing.txt        → account: acc_acmeplumbing
-  onboarding_acmeplumbing.txt  → matches above
-  demo_arctic_hvac.txt
-  onboarding_arctic_hvac.txt
-  ...
-```
-
-Or use explicit file args:
-```bash
-python scripts/run_batch.py \
-  --demo-files demo1.txt demo2.txt ... \
-  --onboarding-files onboard1.txt onboard2.txt ...
-```
-
----
-
-## n8n Workflow (Self-Hosted, Free)
-
-### Start n8n with Docker
+## 🐳 Docker Setup (n8n + Pipeline Runner)
 
 ```bash
-cp .env.example .env
-# Edit .env and add ANTHROPIC_API_KEY if desired
+cp .env.example .env   # Add GROQ_API_KEY inside
 
 docker-compose up -d
 ```
 
-n8n runs at http://localhost:5678 (login: admin / claraai123)
+| Service | URL | Credentials |
+|---|---|---|
+| n8n orchestrator | http://localhost:5678 | admin / claraai123 |
+| pipeline-runner | — | CLI (see below) |
 
-### Import workflow
+### Import n8n workflow
+1. Open http://localhost:5678
+2. **Workflows → Import** → upload `workflows/clara_pipeline_n8n.json`
+3. Activate
 
-1. Open n8n at http://localhost:5678
-2. Click **Workflows → Import**
-3. Select `workflows/clara_pipeline_n8n.json`
-4. Activate the workflow
+### Run batch via Docker
+```bash
+# Full batch
+docker-compose run --rm pipeline-runner
+
+# Single account
+docker-compose run --rm pipeline-runner python scripts/pipeline_a.py sample_transcripts/demo_bens_electric.txt bens_electric
+```
+Outputs are live-mounted — `outputs/`, `logs/`, `tasks/` appear on your host immediately.
 
 ### Trigger via webhook
-
-**Run Pipeline A:**
-```bash
-curl -X POST http://localhost:5678/webhook/pipeline-a \
-  -H "Content-Type: application/json" \
-  -d '{"transcript_path": "/data/clara-pipeline/sample_transcripts/demo_1.txt", "account_id": "acc_1"}'
-```
-
-**Run Pipeline B:**
-```bash
-curl -X POST http://localhost:5678/webhook/pipeline-b \
-  -H "Content-Type: application/json" \
-  -d '{"transcript_path": "/data/clara-pipeline/sample_transcripts/onboarding_1.txt", "account_id": "acc_1"}'
-```
-
-**Run Full Batch:**
 ```bash
 curl -X POST http://localhost:5678/webhook/batch
 ```
 
 ---
 
-## Output File Reference
+## 📂 How to Plug In Your Dataset Files
+
+Place your transcripts in `sample_transcripts/` following this naming convention:
+```
+sample_transcripts/
+├── demo_<account_id>.txt          # Pipeline A input
+└── onboarding_<account_id>.txt    # Pipeline B input
+```
+Then run:
+```bash
+python scripts/run_batch.py --dataset-dir ./sample_transcripts
+```
+The batch runner auto-pairs `demo_X` with `onboarding_X` by filename.
+
+If you have audio instead of transcripts, use [Whisper locally](https://github.com/openai/whisper):
+```bash
+pip install openai-whisper
+whisper recording.mp3 --output_format txt
+```
+
+---
+
+## 📤 Output Schemas
 
 ### `account_memo.json`
 ```json
 {
-  "account_id": "acc_1",
+  "account_id": "bens_electric",
   "version": "v1",
-  "company_name": "AcmePlumbing Inc.",
-  "business_hours": { "days": ["Mon","Fri"], "start": "7:00am", "end": "6:00pm", "timezone": "Central" },
-  "office_address": "1452 Industrial Blvd, Houston TX 77002",
-  "services_supported": ["Plumbing", "Drain Cleaning"],
-  "emergency_definition": ["Burst Pipe", "Flooding"],
-  "emergency_routing_rules": { "primary_contact": "...", "fallback": "..." },
-  "non_emergency_routing_rules": { "action": "take message", "destination": "..." },
-  "call_transfer_rules": { "timeout_seconds": 30, "retries": 1, "if_transfer_fails": "..." },
-  "integration_constraints": ["Never create jobs in ServiceTrade"],
-  "after_hours_flow_summary": "...",
-  "office_hours_flow_summary": "...",
-  "questions_or_unknowns": [],
-  "notes": "..."
+  "created_at": "2026-03-03T21:37:30Z",
+  "source_file": "sample_transcripts/demo_bens_electric.txt",
+  "company_name": "Ben's Electrical Solutions",
+  "business_hours": { "days": ["Mon","Tue","Wed","Thu","Fri"], "start": null, "end": null, "timezone": null },
+  "office_address": null,
+  "services_supported": ["service calls", "EV chargers", "panel changes"],
+  "emergency_definition": ["emergency calls from property managers"],
+  "emergency_routing_rules": { "primary_contact": "Ben", "secondary_contact": null, "fallback": "defer to another service" },
+  "non_emergency_routing_rules": { "action": null, "destination": null },
+  "call_transfer_rules": { "timeout_seconds": null, "retries": null, "if_transfer_fails": null },
+  "integration_constraints": ["don't use virtual receptionists"],
+  "after_hours_flow_summary": "Ben is on call and may answer or defer",
+  "office_hours_flow_summary": "Ben manages operations and answers calls",
+  "questions_or_unknowns": ["What is the exact business hours and timezone?", "What is the office address?"],
+  "notes": "Ben has 30 years experience. Uses Jobber as CRM."
 }
 ```
 
@@ -195,119 +189,122 @@ curl -X POST http://localhost:5678/webhook/batch
 {
   "agent_name": "Clara",
   "version": "v1",
-  "voice_style": { "provider": "elevenlabs", "voice_id": "rachel" },
-  "system_prompt": "...(full generated prompt)...",
-  "key_variables": { "timezone": "...", "business_hours_start": "...", ... },
+  "account_id": "bens_electric",
+  "voice_style": { "provider": "elevenlabs", "voice_id": "rachel", "speed": 1.0, "stability": 0.75 },
+  "system_prompt": "...(full Clara voice agent prompt)...",
+  "key_variables": { "timezone": null, "business_hours_start": null, "business_days": ["Mon","Tue","Wed","Thu","Fri"] },
   "tool_invocation_placeholders": { "transfer_call": {...}, "create_ticket": {...} },
-  "call_transfer_protocol": { "timeout_seconds": 30, "retries": 1, "on_failure": "..." },
-  "fallback_protocol": { "message": "...", "collect_before_fallback": ["name","phone"] },
-  "integration_constraints": [...]
+  "call_transfer_protocol": { "timeout_seconds": 30, "retries": 1, "on_failure": "Take message, assure callback" },
+  "fallback_protocol": { "message": "I wasn't able to connect you. I've noted your info and someone will follow up shortly.", "collect_before_fallback": ["name","phone"], "emergency_addition": ["address"] },
+  "integration_constraints": ["don't use virtual receptionists"]
 }
 ```
 
-### `changelog/acc_1_changes.md`
-```markdown
-# Changelog: acc_1
+### `tasks/<account_id>.json` (Task Tracker)
+```json
+{
+  "task_id": "CLARA-BENS_ELECTRIC",
+  "account_id": "bens_electric",
+  "company_name": "Ben's Electrical Solutions",
+  "status": "pending_onboarding",
+  "created_at": "2026-03-03T21:37:30Z",
+  "agent_version": "v1",
+  "open_questions": ["What is the exact business hours?", "What is the office address?"],
+  "next_steps": ["Schedule onboarding call", "Confirm emergency routing contacts"]
+}
+```
 
-**Generated:** 2025-02-01T...
-**Version:** v1 → v2
-**Summary:** 3 field(s) updated during onboarding
+### `changelog/bens_electric_changes.md`
+```markdown
+# Changelog: bens_electric
+**Version:** v1 → v2  |  **Changes:** 8 field(s) updated
 
 ## Changes
-
-### `business_hours.days`
-- **Before:** `["Mon","Tue","Wed","Thu","Fri"]`
-- **After:** `["Mon","Tue","Wed","Thu","Fri","Sat"]`
-- **Type:** list_updated
+### `business_hours.start`
+- **Before:** null
+- **After:** "8:00"
+- **Type:** added
 ```
 
 ---
 
-## Retell Setup (Manual Import)
+## 📌 Project Directory
 
-If Retell's free tier doesn't allow programmatic agent creation:
-
-1. Create account at https://retell.ai
-2. Go to **Agents → Create Agent**
-3. Open `outputs/accounts/<id>/v2/agent_spec.json`
-4. Copy `system_prompt` into the agent's System Prompt field
-5. Configure:
-   - Voice: ElevenLabs Rachel (or closest available)
-   - Transfer number: from `key_variables.emergency_contact_primary`
-   - Timezone: from `key_variables.timezone`
-6. Save and test
-
----
-
-## Dashboard
-
-Open `docs/dashboard.html` in any browser — no server needed. Shows:
-- All accounts with v1/v2 status
-- Service tags, routing, hours
-- v1 → v2 diff viewer
-- Generated system prompts
-- Raw JSON viewer
-
----
-
-## File Structure
-
-```
+```text
 clara-ai-pipeline/
 ├── scripts/
-│   ├── pipeline_a.py          # Demo transcript → v1 assets
-│   ├── pipeline_b.py          # Onboarding → v2 assets + changelog
-│   └── run_batch.py           # Batch runner for all files
+│   ├── pipeline_a.py            # Demo transcript → v1 assets + task tracker
+│   ├── pipeline_b.py            # Onboarding → v2 assets + changelog
+│   └── run_batch.py             # Batch runner (all pairs)
 ├── workflows/
-│   └── clara_pipeline_n8n.json  # n8n workflow export
+│   └── clara_pipeline_n8n.json  # n8n webhook workflow export
 ├── outputs/
-│   ├── accounts/
-│   │   └── <account_id>/
-│   │       ├── v1/
-│   │       │   ├── account_memo.json
-│   │       │   └── agent_spec.json
-│   │       └── v2/
-│   │           ├── account_memo.json
-│   │           └── agent_spec.json
-│   └── batch_summary.json
+│   └── accounts/
+│       └── <account_id>/
+│           ├── v1/
+│           │   ├── account_memo.json
+│           │   └── agent_spec.json
+│           └── v2/
+│               ├── account_memo.json
+│               └── agent_spec.json
+├── tasks/
+│   └── <account_id>.json        # Task tracker item (pending_onboarding status)
+├── logs/
+│   └── <account_id>.log         # Timestamped per-account run log
 ├── changelog/
-│   ├── <id>_changelog.json
-│   └── <id>_changes.md
-├── sample_transcripts/
-│   ├── demo_1.txt ... demo_5.txt
-│   └── onboarding_1.txt ... onboarding_5.txt
+│   ├── <account_id>_changelog.json
+│   └── <account_id>_changes.md
+├── sample_transcripts/          # Input transcripts (.txt)
 ├── docs/
-│   └── dashboard.html         # Visual dashboard (open in browser)
-├── docker-compose.yml         # n8n self-hosted setup
+│   └── dashboard.html           # Static diff viewer + prompt viewer UI
+├── docker-compose.yml           # n8n + pipeline-runner services
+├── Dockerfile                   # Pipeline runner image
+├── requirements.txt             # No external dependencies (stdlib only)
 └── README.md
 ```
 
 ---
 
-## Known Limitations
+## 🔧 Retell Setup
 
-- **LLM extraction without API key**: Rule-based fallback is reliable for structured transcripts but may miss nuanced context or unusual phrasing. With `ANTHROPIC_API_KEY`, extraction quality improves significantly.
-- **Audio transcription**: Not included. Accepts `.txt` / `.md` transcript files. For audio, run Whisper locally (`pip install openai-whisper`) and pipe output as a transcript file.
-- **Retell API**: Free tier may not support programmatic agent creation. The `agent_spec.json` is designed for manual paste or Retell API v2 once available.
-- **Idempotency**: Running twice overwrites outputs — no duplicate creation. Safe to re-run.
+Retell's free tier does **not** expose programmatic agent creation via API. This pipeline handles that as follows:
 
-## What Would Improve With Production Access
+**What the pipeline does:** Generates a complete `agent_spec.json` per account that exactly mirrors Retell's agent configuration schema.
 
-- **Retell API integration**: Directly create/update agents via API instead of manual import.
-- **Whisper transcription node**: Auto-transcribe audio uploads in the n8n workflow.
-- **Webhook for task tracking**: Auto-create Asana/Linear tasks per account via API.
-- **Supabase storage**: Replace local JSON files with Supabase for multi-user access and real-time sync.
-- **Confidence scoring**: Flag low-confidence extractions for human review.
-- **Prompt versioning**: Track prompt changes alongside config changes.
+**Manual import steps:**
+1. Log into [app.retellai.com](https://app.retellai.com)
+2. Create → New Agent
+3. Copy `system_prompt` from `agent_spec.json` into the agent's system prompt field
+4. Set voice to `rachel` (ElevenLabs) at speed `1.0`, stability `0.75`
+5. Configure transfer destinations from `emergency_routing_rules.primary_contact`
+6. Set transfer timeout from `call_transfer_protocol.timeout_seconds`
+
+**In production:** With a paid Retell plan, replace the `save_outputs()` step with a `POST /v2/create-agent` API call using the spec as payload.
 
 ---
 
-## Environment Variables
+## ⚠️ Known Limitations
 
-| Variable | Required | Description |
+| Limitation | Impact | Workaround |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | No | Enables LLM extraction (Haiku model, minimal cost) |
+| Groq free tier has rate limits | Batches > 10 calls may hit 429 | Rule-based fallback kicks in automatically |
+| n8n webhook is local only | Cannot receive external webhooks | Use ngrok for public endpoint |
+| Task tracker is local JSON | Not a real Asana/Linear integration | Drop-in replacement: add API call in `create_task_tracker_item()` |
+| Transcript-only (no STT) | Audio files need pre-processing | Run Whisper locally first |
+| Dashboard shows embedded data | Doesn't auto-reload after new runs | Refresh browser after running batch |
 
 ---
 
-*Built for Clara AI intern assignment — zero-cost, reproducible, end-to-end.*
+## 🚀 What I'd Improve With Production Access
+
+1. **Real Retell API calls** — replace manual import with `POST /v2/create-agent` on paid plan
+2. **Asana/Linear task creation** — swap `create_task_tracker_item()` for a real API call (structure already matches)
+3. **Supabase storage** — replace local JSON files with Postgres-backed versioned records
+4. **Retell webhook listener** — receive live call transcripts instead of file uploads
+5. **Whisper transcription node** — add an n8n audio-to-text step for direct recording ingestion
+6. **Conflict resolution UI** — flag and surface merge conflicts for human review before committing v2
+7. **Multi-account dashboard** — real-time dashboard backed by Supabase queries
+
+---
+
+*Built for Clara AI — zero-cost, reproducible, end-to-end voice agent configuration pipeline.*

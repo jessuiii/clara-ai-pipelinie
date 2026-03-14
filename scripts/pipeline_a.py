@@ -1,45 +1,83 @@
 #!/usr/bin/env python3
 """
 Pipeline A: Demo Call Transcript -> Preliminary Retell Agent
-Zero-cost: uses rule-based extraction + Anthropic API (free tier via claude.ai API or local)
+Zero-cost: uses rule-based extraction + Groq free API
 """
 
 import json
 import os
 import re
 import sys
-import uuid
 import hashlib
+import logging
 from datetime import datetime
 from pathlib import Path
 
-# ── Config ────────────────────────────────────────────────────────────────────
 OUTPUTS_DIR = Path(__file__).parent.parent / "outputs" / "accounts"
 CHANGELOG_DIR = Path(__file__).parent.parent / "changelog"
+LOGS_DIR = Path(__file__).parent.parent / "logs"
+TASKS_DIR = Path(__file__).parent.parent / "tasks"
 
-# ── LLM Client (zero-cost: uses Anthropic free-tier API key from env) ─────────
+def setup_logger(account_id: str) -> logging.Logger:
+    """Create a per-account rotating log file in logs/{account_id}.log"""
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    log_path = LOGS_DIR / f"{account_id}.log"
+    logger = logging.getLogger(account_id)
+    logger.setLevel(logging.DEBUG)
+    if not logger.handlers:
+        fh = logging.FileHandler(log_path, encoding="utf-8")
+        fh.setLevel(logging.DEBUG)
+        fh.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+        logger.addHandler(fh)
+    return logger
+
 def call_llm(prompt: str) -> str:
-    """Call Claude API. Set ANTHROPIC_API_KEY in env (free tier)."""
-    api_key = os.environ.get("ANTHROPIC_API_KEY")
+    api_key = os.environ.get("GROQ_API_KEY")
     if not api_key:
-        print("[WARN] ANTHROPIC_API_KEY not set — using rule-based fallback extraction.")
+        print("[WARN] GROQ_API_KEY not set — using rule-based fallback extraction.")
         return ""
+
+    import urllib.request
+    import urllib.error
+
+    payload = json.dumps({
+        "model": "llama-3.3-70b-versatile",
+        "messages": [{"role": "user", "content": prompt}],
+        "max_tokens": 2048,
+        "temperature": 0.1
+    }).encode("utf-8")
+
+    req = urllib.request.Request(
+        "https://api.groq.com/openai/v1/chat/completions",
+        data=payload,
+        headers={
+            "Authorization": "Bearer " + api_key,
+            "Content-Type": "application/json",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        },
+        method="POST"
+    )
 
     try:
-        import anthropic
-        client = anthropic.Anthropic(api_key=api_key)
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",  # cheapest / free-tier friendly
-            max_tokens=2048,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return message.content[0].text
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            result = json.loads(resp.read().decode("utf-8"))
+            content = result["choices"][0]["message"]["content"]
+            logger = logging.getLogger("pipeline")
+            logger.debug(f"LLM response received ({len(content)} chars)")
+            return content
+    except urllib.error.HTTPError as e:
+        body = e.read().decode("utf-8", errors="replace")
+        msg = f"Groq HTTP {e.code}: {body[:300]}. Falling back to rule-based."
+        print(f"[WARN] {msg}")
+        logging.getLogger("pipeline").warning(msg)
+        return ""
     except Exception as e:
-        print(f"[WARN] LLM call failed: {e}. Falling back to rule-based extraction.")
+        msg = f"Groq call failed: {e}. Falling back to rule-based."
+        print(f"[WARN] {msg}")
+        logging.getLogger("pipeline").warning(msg)
         return ""
 
-# ── Rule-based extraction helpers ─────────────────────────────────────────────
-def extract_company_name(text: str) -> str:
+def extract_company_name(text):
     patterns = [
         r"(?:company|business|account|client)[:\s]+([A-Z][A-Za-z0-9\s&,.-]{2,40})",
         r"(?:this is|calling from|with)\s+([A-Z][A-Za-z0-9\s&]{2,30})",
@@ -51,57 +89,37 @@ def extract_company_name(text: str) -> str:
             return m.group(1).strip()
     return "Unknown Company"
 
-def extract_business_hours(text: str) -> dict:
+def extract_business_hours(text):
     hours = {"days": [], "start": "", "end": "", "timezone": ""}
-    # Days
-    day_map = {"monday":"Mon","tuesday":"Tue","wednesday":"Wed","thursday":"Thu",
-               "friday":"Fri","saturday":"Sat","sunday":"Sun"}
+    day_map = {"monday":"Mon","tuesday":"Tue","wednesday":"Wed","thursday":"Thu","friday":"Fri","saturday":"Sat","sunday":"Sun"}
     found_days = [v for k,v in day_map.items() if k in text.lower()]
     if found_days:
         hours["days"] = found_days
     elif re.search(r"mon(day)?\s*(through|to|-)\s*fri(day)?", text, re.I):
         hours["days"] = ["Mon","Tue","Wed","Thu","Fri"]
-
-    # Hours
-    time_pattern = r"(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:to|-|through)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))"
-    m = re.search(time_pattern, text, re.I)
+    m = re.search(r"(\d{1,2}(?::\d{2})?\s*(?:am|pm))\s*(?:to|-|through)\s*(\d{1,2}(?::\d{2})?\s*(?:am|pm))", text, re.I)
     if m:
         hours["start"] = m.group(1).strip()
         hours["end"] = m.group(2).strip()
-
-    # Timezone
-    tz_pattern = r"\b(EST|CST|MST|PST|EDT|CDT|MDT|PDT|Eastern|Central|Mountain|Pacific)\b"
-    m = re.search(tz_pattern, text, re.I)
+    m = re.search(r"\b(EST|CST|MST|PST|EDT|CDT|MDT|PDT|Eastern|Central|Mountain|Pacific)\b", text, re.I)
     if m:
         hours["timezone"] = m.group(1)
-
     return hours
 
-def extract_address(text: str) -> str:
-    addr_pattern = r"\d{1,5}\s+[A-Za-z0-9\s,.-]{5,60}(?:Street|St|Avenue|Ave|Blvd|Road|Rd|Drive|Dr|Lane|Ln|Way|Court|Ct)[.,\s]"
-    m = re.search(addr_pattern, text, re.I)
+def extract_address(text):
+    m = re.search(r"\d{1,5}\s+[A-Za-z0-9\s,.-]{5,60}(?:Street|St|Avenue|Ave|Blvd|Road|Rd|Drive|Dr|Lane|Ln|Way|Court|Ct)[.,\s]", text, re.I)
     return m.group(0).strip() if m else ""
 
-def extract_services(text: str) -> list:
-    services = []
-    keywords = ["hvac","plumbing","electrical","roofing","pest control","landscaping",
-                "cleaning","security","fire","sprinkler","elevator","generator",
-                "mechanical","refrigeration","air conditioning","heating","ventilation"]
-    for kw in keywords:
-        if kw in text.lower():
-            services.append(kw.title())
-    return list(set(services)) or ["General Facility Services"]
+def extract_services(text):
+    keywords = ["hvac","plumbing","electrical","roofing","pest control","landscaping","cleaning","security","fire","sprinkler","elevator","generator","mechanical","refrigeration","air conditioning","heating","ventilation"]
+    return list(set([kw.title() for kw in keywords if kw in text.lower()])) or ["General Facility Services"]
 
-def extract_emergency_definition(text: str) -> list:
-    triggers = []
-    keywords = ["flood","fire","gas leak","no heat","no cool","power outage","burst pipe",
-                "water damage","smoke","alarm","critical","urgent","after hours emergency"]
-    for kw in keywords:
-        if kw in text.lower():
-            triggers.append(kw.title())
-    return triggers or ["No heat/cool", "Water leak", "Fire/smoke alarm"]
+def extract_emergency_definition(text):
+    keywords = ["flood","fire","gas leak","no heat","no cool","power outage","burst pipe","water damage","smoke","alarm","critical","urgent"]
+    found = [kw.title() for kw in keywords if kw in text.lower()]
+    return found or ["No heat/cool", "Water leak", "Fire/smoke alarm"]
 
-def extract_routing(text: str, routing_type: str) -> dict:
+def extract_routing(text, routing_type):
     contacts = re.findall(r"(?:call|contact|reach|transfer to)\s+([A-Z][a-z]+(?:\s[A-Z][a-z]+)?)\s+(?:at\s+)?([\d\s\-().+]{7,20})?", text, re.I)
     routing = {"primary": "", "fallback": "voicemail or answering service"}
     if contacts:
@@ -110,95 +128,115 @@ def extract_routing(text: str, routing_type: str) -> dict:
             routing["secondary"] = f"{contacts[1][0]} {contacts[1][1]}".strip()
     return routing
 
-# ── LLM-based extraction (preferred when API key available) ───────────────────
-EXTRACTION_PROMPT = """You are a precise data extractor for a facilities management AI assistant setup.
+EXTRACTION_PROMPT = """You are a precise data extractor for a facilities management AI assistant.
 
-Given the following call transcript, extract structured information and return ONLY valid JSON with these exact fields. Do NOT invent information — use null or empty list if missing.
+Read this call transcript carefully and extract the structured data. Return ONLY valid JSON — no extra text, no markdown fences.
 
 TRANSCRIPT:
 {transcript}
 
-Return JSON with this exact structure:
+Return this exact JSON structure:
 {{
-  "company_name": "string or null",
+  "company_name": "exact company name from transcript",
   "business_hours": {{
-    "days": ["Mon","Tue",...],
-    "start": "8:00am",
-    "end": "5:00pm",
-    "timezone": "EST"
+    "days": ["Mon","Tue","Wed","Thu","Fri"],
+    "start": "7:00am",
+    "end": "6:00pm",
+    "timezone": "Central"
   }},
-  "office_address": "string or null",
-  "services_supported": ["list of services"],
-  "emergency_definition": ["list of emergency trigger types"],
+  "office_address": "full address or null",
+  "services_supported": ["service1", "service2"],
+  "emergency_definition": ["trigger1", "trigger2"],
   "emergency_routing_rules": {{
-    "primary_contact": "name and number",
-    "secondary_contact": "name and number or null",
-    "fallback": "what to do if no answer"
+    "primary_contact": "Name and phone number",
+    "secondary_contact": "Name and phone number or null",
+    "fallback": "what happens if no answer"
   }},
   "non_emergency_routing_rules": {{
-    "action": "take message / transfer / schedule",
-    "destination": "who/where"
+    "action": "take message or transfer",
+    "destination": "where/who"
   }},
   "call_transfer_rules": {{
     "timeout_seconds": 30,
     "retries": 1,
-    "if_transfer_fails": "what to say"
+    "if_transfer_fails": "what to tell caller"
   }},
-  "integration_constraints": ["list of constraints like never create X jobs in Y system"],
-  "after_hours_flow_summary": "one paragraph summary",
-  "office_hours_flow_summary": "one paragraph summary",
-  "questions_or_unknowns": ["only truly missing critical info"],
-  "notes": "short notes"
+  "integration_constraints": ["never do X in Y system"],
+  "after_hours_flow_summary": "brief summary of after hours process",
+  "office_hours_flow_summary": "brief summary of office hours process",
+  "questions_or_unknowns": [],
+  "notes": "any important notes"
 }}"""
 
-def extract_from_transcript_llm(transcript: str) -> dict:
-    prompt = EXTRACTION_PROMPT.format(transcript=transcript[:8000])
+def extract_from_transcript_llm(transcript):
+    prompt = EXTRACTION_PROMPT.format(transcript=transcript[:18000])
     response = call_llm(prompt)
     if not response:
         return {}
-    # Strip markdown fences if present
     response = re.sub(r"```json|```", "", response).strip()
+    start = response.find("{")
+    end = response.rfind("}") + 1
+    if start >= 0 and end > start:
+        response = response[start:end]
     try:
         return json.loads(response)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as e:
+        print(f"[WARN] JSON parse failed: {e}")
         return {}
 
-def extract_from_transcript_rules(transcript: str) -> dict:
-    """Fallback rule-based extraction."""
+def extract_from_transcript_rules(transcript):
+    """Rule-based extraction. Only populates fields explicitly found in the transcript.
+    Never invents defaults — ambiguous or missing fields are left null and flagged."""
+    bh = extract_business_hours(transcript)
+    routing = extract_routing(transcript, "emergency")
+    unknowns = []
+
+    # Flag fields we can't reliably extract from a demo call alone
+    if not bh.get("start"):
+        unknowns.append("Business hours (start/end time) not confirmed — to be finalized during onboarding.")
+    if not bh.get("timezone"):
+        unknowns.append("Timezone not explicitly stated — confirm during onboarding.")
+    if not routing.get("primary"):
+        unknowns.append("Emergency on-call contact not explicitly named — confirm during onboarding.")
+    if not extract_address(transcript):
+        unknowns.append("Office address not mentioned — confirm during onboarding.")
+
     return {
         "company_name": extract_company_name(transcript),
-        "business_hours": extract_business_hours(transcript),
-        "office_address": extract_address(transcript),
+        "business_hours": bh if any(bh.values()) else {"days": None, "start": None, "end": None, "timezone": None},
+        "office_address": extract_address(transcript) or None,
         "services_supported": extract_services(transcript),
         "emergency_definition": extract_emergency_definition(transcript),
-        "emergency_routing_rules": extract_routing(transcript, "emergency"),
-        "non_emergency_routing_rules": {"action": "take message", "destination": "office voicemail"},
-        "call_transfer_rules": {"timeout_seconds": 30, "retries": 1, "if_transfer_fails": "Take a detailed message and assure callback within 30 minutes"},
+        "emergency_routing_rules": {
+            "primary_contact": routing.get("primary") or None,
+            "secondary_contact": routing.get("secondary") or None,
+            "fallback": None  # Must be confirmed during onboarding
+        },
+        "non_emergency_routing_rules": {
+            "action": None,       # Not safe to assume — confirm during onboarding
+            "destination": None
+        },
+        "call_transfer_rules": {
+            "timeout_seconds": None,  # Not discussed in demo — confirm during onboarding
+            "retries": None,
+            "if_transfer_fails": None
+        },
         "integration_constraints": [],
-        "after_hours_flow_summary": "Greet caller, confirm emergency status, collect name/number/address, attempt transfer to on-call tech, leave message if unavailable.",
-        "office_hours_flow_summary": "Greet caller, collect name and callback number, route to appropriate department or take message.",
-        "questions_or_unknowns": [],
-        "notes": "Extracted via rule-based fallback."
+        "after_hours_flow_summary": None,   # Cannot be assumed — to be defined during onboarding
+        "office_hours_flow_summary": None,  # Cannot be assumed — to be defined during onboarding
+        "questions_or_unknowns": unknowns,
+        "notes": "Extracted via rule-based fallback. LLM extraction was unavailable or returned no data."
     }
 
-# ── Account Memo builder ───────────────────────────────────────────────────────
-def build_account_memo(transcript: str, account_id: str, version: str = "v1", source_file: str = "") -> dict:
-    # Try LLM first, fall back to rules
+def build_account_memo(transcript, account_id, version="v1", source_file=""):
     extracted = extract_from_transcript_llm(transcript)
     if not extracted or not extracted.get("company_name"):
         print("  → Using rule-based extraction")
         extracted = extract_from_transcript_rules(transcript)
+    else:
+        print("  → AI extraction successful (Groq)")
+    return {"account_id": account_id, "version": version, "created_at": datetime.now().isoformat() + "Z", "source_file": source_file, **extracted}
 
-    memo = {
-        "account_id": account_id,
-        "version": version,
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "source_file": source_file,
-        **extracted
-    }
-    return memo
-
-# ── Retell Agent Spec builder ──────────────────────────────────────────────────
 SYSTEM_PROMPT_TEMPLATE = """You are {agent_name}, a professional AI receptionist for {company_name}.
 
 ## IDENTITY
@@ -214,174 +252,166 @@ SYSTEM_PROMPT_TEMPLATE = """You are {agent_name}, a professional AI receptionist
 2. Listen and identify the nature of the call.
 3. Collect caller's first name and best callback number.
 4. If routine inquiry: "I'll make sure the right person gets back to you."
-5. Attempt transfer if applicable: [TRANSFER: {{destination}}]
-6. If transfer fails: "I wasn't able to connect you directly. I've noted your information and someone will call you back shortly. Is there anything else I can help you with?"
+5. Attempt transfer if applicable.
+6. If transfer fails: "I wasn't able to connect you directly. I've noted your information and someone will call you back shortly."
 7. Confirm next steps and close: "Thank you for calling {company_name}. Have a great day!"
 
 ## AFTER HOURS CALL FLOW
 1. Greet: "Thank you for calling {company_name}. Our office is currently closed. If this is an emergency, please stay on the line."
-2. Confirm: "Is this an emergency situation?" 
+2. Confirm: "Is this an emergency situation?"
 3. IF EMERGENCY:
-   a. "I'm going to connect you with our on-call technician. First, can I get your name, best callback number, and the address of the issue?"
-   b. Collect: name, phone, address
-   c. Attempt emergency transfer: [TRANSFER: {{emergency_contact}}]
-   d. If transfer fails: "I was unable to reach our on-call team directly. I've recorded your information as urgent and a technician will call you back within 30 minutes. Please call 911 if there is immediate danger."
+   a. Collect name, callback number, and address
+   b. Attempt emergency transfer to on-call contact
+   c. If transfer fails: "I've recorded your information as urgent. A technician will call you back within 30 minutes. Please call 911 if there is immediate danger."
 4. IF NOT EMERGENCY:
-   a. "Our team is available {days} from {start} to {end} {timezone}. Can I take your name and number so someone can follow up with you first thing?"
-   b. Collect name and callback number.
-   c. "We'll be in touch during business hours. Is there anything else?"
-5. Close: "Thank you for calling {company_name}. Have a good night."
+   a. "Our team is available {days} from {start} to {end} {timezone}."
+   b. Collect name and callback number for next-business-day followup.
+5. Close warmly.
 
 ## EMERGENCY TRIGGERS
-The following qualify as emergencies: {emergency_triggers}
+{emergency_triggers}
 
 ## TRANSFER PROTOCOL
-- Attempt transfer silently without telling the caller you are "transferring" by name.
-- Say: "Let me connect you with the right person now."
-- If no answer after {timeout}s: retry once, then take message.
-- Never leave the caller without a clear next step.
+- Transfer silently. Say: "Let me connect you with the right person now."
+- Timeout: {timeout}s, retry once, then take message.
 
 ## RULES
 - Do not ask more questions than necessary.
-- Only collect: name, callback number, and address (emergencies only).
-- Do not mention internal systems, tools, or software by name.
+- Collect only: name, callback number, address (emergencies only).
+- Never mention internal systems by name.
 - Keep responses under 3 sentences unless explaining a process.
-- Services supported: {services}
+- Services: {services}
 """
 
-def build_agent_spec(memo: dict, version: str = "v1") -> dict:
-    bh = memo.get("business_hours", {})
-    days_str = ", ".join(bh.get("days", ["Mon-Fri"]))
-    emergency_triggers = ", ".join(memo.get("emergency_definition", ["flood", "fire", "no heat/cool"]))
-    services = ", ".join(memo.get("services_supported", ["general services"]))
+def build_agent_spec(memo, version="v1"):
+    bh = memo.get("business_hours") or {}
+    days_str = ", ".join(bh.get("days") or ["Mon-Fri"])
+    emergency_triggers = ", ".join(memo.get("emergency_definition") or ["flood","fire","no heat/cool"])
+    services = ", ".join(memo.get("services_supported") or ["general services"])
     transfer_rules = memo.get("call_transfer_rules", {})
     emergency_routing = memo.get("emergency_routing_rules", {})
-
     agent_name = "Clara"
     company_name = memo.get("company_name", "our company")
 
     system_prompt = SYSTEM_PROMPT_TEMPLATE.format(
-        agent_name=agent_name,
-        company_name=company_name,
-        days=days_str,
-        start=bh.get("start", "8:00am"),
-        end=bh.get("end", "5:00pm"),
-        timezone=bh.get("timezone", "local time"),
+        agent_name=agent_name, company_name=company_name, days=days_str,
+        start=bh.get("start") or "TBD — confirm with business",
+        end=bh.get("end") or "TBD — confirm with business",
+        timezone=bh.get("timezone") or "local time",
         emergency_triggers=emergency_triggers,
-        timeout=transfer_rules.get("timeout_seconds", 30),
+        timeout=transfer_rules.get("timeout_seconds") or 30,
         services=services
     )
 
-    spec = {
-        "agent_name": agent_name,
-        "version": version,
-        "account_id": memo.get("account_id"),
-        "created_at": datetime.utcnow().isoformat() + "Z",
-        "voice_style": {
-            "provider": "elevenlabs",
-            "voice_id": "rachel",  # professional female voice
-            "speed": 1.0,
-            "stability": 0.75
-        },
+    return {
+        "agent_name": agent_name, "version": version, "account_id": memo.get("account_id"),
+        "created_at": datetime.now().isoformat() + "Z",
+        "voice_style": {"provider": "elevenlabs", "voice_id": "rachel", "speed": 1.0, "stability": 0.75},
         "system_prompt": system_prompt,
         "key_variables": {
-            "timezone": bh.get("timezone", ""),
-            "business_hours_start": bh.get("start", ""),
-            "business_hours_end": bh.get("end", ""),
-            "business_days": bh.get("days", []),
-            "office_address": memo.get("office_address", ""),
-            "emergency_contact_primary": emergency_routing.get("primary_contact", ""),
-            "emergency_contact_fallback": emergency_routing.get("fallback", "voicemail"),
+            "timezone": bh.get("timezone",""), "business_hours_start": bh.get("start",""),
+            "business_hours_end": bh.get("end",""), "business_days": bh.get("days",[]),
+            "office_address": memo.get("office_address",""),
+            "emergency_contact_primary": emergency_routing.get("primary_contact",""),
+            "emergency_contact_fallback": emergency_routing.get("fallback","voicemail"),
             "company_name": company_name
         },
         "tool_invocation_placeholders": {
-            "transfer_call": {
-                "trigger": "when caller needs to be connected to a person",
-                "destinations": {
-                    "emergency": emergency_routing.get("primary_contact", ""),
-                    "office": memo.get("non_emergency_routing_rules", {}).get("destination", "")
-                },
-                "note": "Do NOT mention this tool to the caller by name"
-            },
-            "create_ticket": {
-                "trigger": "after collecting caller info for non-emergency after-hours",
-                "fields": ["caller_name", "callback_number", "issue_summary"],
-                "note": "Silent background action"
-            }
+            "transfer_call": {"trigger": "when caller needs to be connected", "destinations": {"emergency": emergency_routing.get("primary_contact",""), "office": memo.get("non_emergency_routing_rules",{}).get("destination","")}, "note": "Do NOT mention to caller"},
+            "create_ticket": {"trigger": "after collecting caller info for non-emergency after-hours", "fields": ["caller_name","callback_number","issue_summary"], "note": "Silent background action"}
         },
-        "call_transfer_protocol": {
-            "timeout_seconds": transfer_rules.get("timeout_seconds", 30),
-            "retries": transfer_rules.get("retries", 1),
-            "on_failure": transfer_rules.get("if_transfer_fails", "Take message, assure callback")
-        },
-        "fallback_protocol": {
-            "message": "I wasn't able to connect you. I've noted your information and someone will follow up shortly.",
-            "collect_before_fallback": ["name", "phone"],
-            "emergency_addition": ["address"]
-        },
-        "integration_constraints": memo.get("integration_constraints", [])
+        "call_transfer_protocol": {"timeout_seconds": transfer_rules.get("timeout_seconds",30), "retries": transfer_rules.get("retries",1), "on_failure": transfer_rules.get("if_transfer_fails","Take message, assure callback")},
+        "fallback_protocol": {"message": "I wasn't able to connect you. I've noted your information and someone will follow up shortly.", "collect_before_fallback": ["name","phone"], "emergency_addition": ["address"]},
+        "integration_constraints": memo.get("integration_constraints",[])
     }
-    return spec
 
-# ── File I/O ───────────────────────────────────────────────────────────────────
-def save_outputs(account_id: str, version: str, memo: dict, spec: dict):
+def save_outputs(account_id, version, memo, spec):
     out_dir = OUTPUTS_DIR / account_id / version
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    memo_path = out_dir / "account_memo.json"
-    spec_path = out_dir / "agent_spec.json"
-
-    with open(memo_path, "w") as f:
+    with open(out_dir / "account_memo.json", "w", encoding="utf-8") as f:
         json.dump(memo, f, indent=2)
-    with open(spec_path, "w") as f:
+    with open(out_dir / "agent_spec.json", "w", encoding="utf-8") as f:
         json.dump(spec, f, indent=2)
+    print(f"  ✓ Saved memo: {out_dir / 'account_memo.json'}")
+    print(f"  ✓ Saved spec: {out_dir / 'agent_spec.json'}")
 
-    print(f"  ✓ Saved memo: {memo_path}")
-    print(f"  ✓ Saved spec: {spec_path}")
-    return memo_path, spec_path
+def create_task_tracker_item(account_id, memo, spec_version="v1"):
+    """Creates a task tracker card in tasks/{account_id}.json.
+    In production this would be an Asana/Linear/GitHub Issues API call.
+    The local JSON file is a reproducible, zero-cost mock.
+    """
+    TASKS_DIR.mkdir(parents=True, exist_ok=True)
+    task_path = TASKS_DIR / f"{account_id}.json"
+    task = {
+        "task_id": f"CLARA-{account_id.upper()}",
+        "account_id": account_id,
+        "company_name": memo.get("company_name", "Unknown"),
+        "status": "pending_onboarding",
+        "created_at": datetime.utcnow().isoformat() + "Z",
+        "agent_version": spec_version,
+        "open_questions": memo.get("questions_or_unknowns", []),
+        "integration_constraints": memo.get("integration_constraints", []),
+        "next_steps": [
+            "Schedule onboarding call to confirm business hours and timezone",
+            "Confirm emergency routing contacts",
+            "Validate integration constraints with client tech stack",
+            "Run Pipeline B after onboarding to generate v2 agent spec"
+        ],
+        "notes": "Auto-generated by Pipeline A. Update after onboarding call."
+    }
+    with open(task_path, "w", encoding="utf-8") as f:
+        json.dump(task, f, indent=2)
+    print(f"  ✓ Task tracker item: tasks/{account_id}.json")
+    return task
 
-def derive_account_id(text: str, source_file: str) -> str:
-    """Derive a stable account_id from filename or content hash."""
+def derive_account_id(text, source_file):
     base = Path(source_file).stem if source_file else ""
-    # Try to get company slug from filename
     slug = re.sub(r"[^a-z0-9]", "_", base.lower())[:20].strip("_")
     if slug:
         return f"acc_{slug}"
-    # Fall back to content hash
-    h = hashlib.md5(text[:200].encode()).hexdigest()[:8]
-    return f"acc_{h}"
+    return "acc_" + hashlib.md5(text[:200].encode()).hexdigest()[:8]
 
-# ── Main Pipeline A ────────────────────────────────────────────────────────────
-def run_pipeline_a(transcript_path: str, account_id: str = None) -> dict:
+def run_pipeline_a(transcript_path, account_id=None):
     print(f"\n[Pipeline A] Processing: {transcript_path}")
-
     with open(transcript_path, "r", encoding="utf-8") as f:
         transcript = f.read()
-
     if not account_id:
         account_id = derive_account_id(transcript, transcript_path)
 
-    print(f"  Account ID: {account_id}")
+    logger = setup_logger(account_id)
+    logger.info(f"=== Pipeline A started ===")
+    logger.info(f"Transcript: {transcript_path} ({len(transcript)} chars)")
+    logger.info(f"Account ID: {account_id}")
 
-    # Step 1: Extract
+    print(f"  Account ID: {account_id}")
     print("  → Extracting account memo...")
     memo = build_account_memo(transcript, account_id, version="v1", source_file=transcript_path)
 
-    # Step 2: Generate agent spec
+    extraction_type = "AI (Groq)" if memo.get("company_name") not in ["Unknown Company", None] else "rule-based"
+    logger.info(f"Extraction method: {extraction_type}")
+    logger.info(f"Company name extracted: {memo.get('company_name')}")
+    logger.info(f"Services: {memo.get('services_supported')}")
+    logger.info(f"Business hours: {memo.get('business_hours')}")
+    logger.info(f"Questions/unknowns: {memo.get('questions_or_unknowns')}")
+
     print("  → Generating Retell agent spec v1...")
     spec = build_agent_spec(memo, version="v1")
-
-    # Step 3: Save
     save_outputs(account_id, "v1", memo, spec)
 
-    return {"account_id": account_id, "memo": memo, "spec": spec}
+    print("  → Creating task tracker item...")
+    task = create_task_tracker_item(account_id, memo, spec_version="v1")
 
-# ── CLI entry ──────────────────────────────────────────────────────────────────
+    logger.info(f"v1 memo saved to outputs/accounts/{account_id}/v1/account_memo.json")
+    logger.info(f"v1 spec saved to outputs/accounts/{account_id}/v1/agent_spec.json")
+    logger.info(f"Task tracker item created: tasks/{account_id}.json")
+    logger.info(f"Open questions: {task.get('open_questions', [])}")
+    logger.info(f"=== Pipeline A complete ===")
+
+    return {"account_id": account_id, "memo": memo, "spec": spec, "task": task}
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("Usage: python pipeline_a.py <transcript_file> [account_id]")
         sys.exit(1)
-    transcript_file = sys.argv[1]
-    acc_id = sys.argv[2] if len(sys.argv) > 2 else None
-    result = run_pipeline_a(transcript_file, acc_id)
+    result = run_pipeline_a(sys.argv[1], sys.argv[2] if len(sys.argv) > 2 else None)
     print(f"\n[Done] Account ID: {result['account_id']}")
