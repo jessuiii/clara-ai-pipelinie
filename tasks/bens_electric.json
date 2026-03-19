@@ -3,15 +3,14 @@
   "account_id": "bens_electric",
   "company_name": "Bens electrical solutions",
   "status": "pending_onboarding",
-  "created_at": "2026-03-14T18:36:17.635059Z",
+  "created_at": "2026-03-19T16:51:34.182138Z",
   "agent_version": "v1",
   "open_questions": [
-    "business hours",
-    "office address",
-    "call transfer rules"
+    "What are the exact business hours?",
+    "What is the office address?"
   ],
   "integration_constraints": [
-    "don't use virtual receptionist"
+    "don't do gemstone lights"
   ],
   "next_steps": [
     "Schedule onboarding call to confirm business hours and timezone",

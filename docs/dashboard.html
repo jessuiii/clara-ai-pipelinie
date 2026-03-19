@@ -788,9 +788,15 @@
         <div class="diff-panel">
           <div class="diff-header">
             <div class="diff-title">Agent System Prompts</div>
-            <select class="diff-selector" id="prompt-account-select" onchange="loadPrompt(this.value)">
-              <option value="">— Select Account —</option>
-            </select>
+            <div style="display:flex;gap:10px;">
+              <select class="diff-selector" id="prompt-account-select" onchange="loadPrompt()">
+                <option value="">— Select Account —</option>
+              </select>
+              <select class="diff-selector" id="prompt-version-select" onchange="loadPrompt()">
+                <option value="v2">v2 (latest)</option>
+                <option value="v1">v1</option>
+              </select>
+            </div>
           </div>
           <div class="diff-body" id="prompt-body">
             <div class="empty">
@@ -1125,10 +1131,19 @@
       </div>`).join('')}`;
     }
 
-    function loadPrompt(id) {
+    function loadPrompt() {
+      const id = document.getElementById('prompt-account-select').value;
+      const ver = document.getElementById('prompt-version-select').value;
       if (!id) return;
       const acc = ACCOUNTS_DATA[id];
-      const memo = acc.v2 || acc.v1;
+      const memo = acc[ver];
+
+      const bodyEl = document.getElementById('prompt-body');
+      if (!memo) {
+        bodyEl.innerHTML = `<div class="empty"><div class="empty-icon">⧖</div><div class="empty-text">Version ${ver} not available for this account.</div></div>`;
+        return;
+      }
+
       const bh = memo.business_hours || {};
       const em = memo.emergency_routing_rules || {};
       const tr = memo.call_transfer_rules || {};
@@ -1183,8 +1198,8 @@ ${(memo.emergency_definition || []).map(e => `- ${e}`).join('\n')}
         .replace(/^(## .+)$/gm, '<span class="prompt-section">$1</span>')
         .replace(/^(\d+\..+)$/gm, '<span style="color:#7c6aff">$1</span>');
 
-      document.getElementById('prompt-body').innerHTML = `
-    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">${memo.company_name} · ${acc.v2 ? 'v2 (latest)' : 'v1'}</div>
+      bodyEl.innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:16px;">${memo.company_name} · ${ver === 'v2' ? 'v2 (latest)' : 'v1'}</div>
     <div class="prompt-viewer">${highlighted}</div>`;
     }
 
